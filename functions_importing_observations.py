@@ -126,6 +126,9 @@ def XCold_Gass_data_reading(filedir):
     log_12_plus_log_O_over_H = metalicity_in_12_plus_log_O_over_H_units - 12 
     metallicity_in_solar_units = 10**log_12_plus_log_O_over_H / Zsolar
 
+    # Detection or upper limit 
+    FLAG_CO = data_table_XCOLDGASS['FLAG_CO'].data 
+
     # Creating pandas dataframe
     data = {
         "Id": ID_XCOLDGASS,
@@ -134,6 +137,7 @@ def XCold_Gass_data_reading(filedir):
         "Mh2": MH2_XCOLDGASS,
         "SFR": SFR_XCOLDGASS, 
         "metallicity": metallicity_in_solar_units,
+        "FLAG_CO": FLAG_CO,
     }
 
     XCOLDGASS = pd.DataFrame(data)
@@ -457,6 +461,46 @@ def Li_model(galaxy_name):
 
     Li_model["sfr_array"] = galaxy_name["sfr_array"]                                    # M⊙/year
     Li_model["log_sfr_array"] = np.log10(galaxy_name["sfr_array"])                      # log(M⊙/year)
+
+    return Li_model
+
+
+
+def Li_model_sfr_input(sfr):
+
+    print("I am in the function Li_model")
+
+    """Lco calcuation from the SFR using the Li model
+    
+    Arguments:
+    ----------
+    galaxy_name: pandas DataFrane
+        DataFrame that contains information about the galaxies  
+
+    Returns:
+    ----------
+    Li_model: pandas DataFrane
+        DataFrame that contains output of the Li Model
+
+    References: 
+    -----------
+    arXiv:1503.08833
+    
+    """ 
+
+    # defining parameters
+    delta_MF, alpha, beta = (1.0, 1.37, -1.74)
+
+    # Calculating infrared luminosity
+    Lir = sfr * 1e10               # M⊙
+
+    # Calculating CO luminosity 
+    log_Lco = ( np.log10(Lir) - beta ) / alpha              # log(K km s^-1 pc^2)   Units are not same with the Lir but it is fine. It is also same in the Cariilli and Walter and also in the Li et al.
+    log_Lco_in_observer_units = log_Lco                     # log(K km s^-1 pc^2)
+
+    Li_model = pd.DataFrame(data=None)
+    Li_model["log_L_co_total_array_in_observer_units"] = log_Lco_in_observer_units      # log(K km s^-1 pc^2)
+    Li_model["log_sfr_array"] = np.log10(sfr)                                           # log(M⊙/year)
 
     return Li_model
 

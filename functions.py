@@ -1,8 +1,6 @@
 import glob
 import numpy as np
-# from constants import *
-# import constants
-from tools import constants
+from .constants import *
 
 def finding_mass_and_coordinates_of_the_halo_with_most_particle_ahf(snapshot_dir, snapshot_number):
 	print("I am in the function finding_mass_and_coordinates_of_the_halo_with_most_particle_ahf") 
@@ -495,7 +493,7 @@ def local_density_scale_height_calculator(density_gas, x_gas, y_gas, z_gas, smoo
 	tree = cKDTree(np.column_stack((x_gas, y_gas, z_gas)))
 
 	# query the k-d tree for the nearest neighbors of each gas particle within a radius of 10 kpc
-	distances, indices = tree.query(tree.data, k=2)
+	distances, indices = tree.query(tree.data, k=2, distance_upper_bound=10)
 
 	# tree.query functions returns two closest nearest neighbourhood because k=2. The closest particle to our particle is the particle
 	# itself. indices[i,0] is the i'th particle. The closest nearest neighboor therefore is the indices[i,1].   
