@@ -98,6 +98,9 @@ def XCold_Gass_data_reading(filedir):
 
     with fits.open(filedir) as hdu:
         data_table_XCOLDGASS = Table(hdu[1].data)
+        
+        
+    print("data_table_XCOLDGASS: ", data_table_XCOLDGASS.keys())
 
     # GASS catalog ID
     ID_XCOLDGASS                = data_table_XCOLDGASS['ID'].data
@@ -129,6 +132,9 @@ def XCold_Gass_data_reading(filedir):
     # Detection or upper limit 
     FLAG_CO = data_table_XCOLDGASS['FLAG_CO'].data 
 
+    # Stellar mass 
+    Mstar = 10**data_table_XCOLDGASS['LOGMSTAR'].data
+    
     # Creating pandas dataframe
     data = {
         "Id": ID_XCOLDGASS,
@@ -138,6 +144,7 @@ def XCold_Gass_data_reading(filedir):
         "SFR": SFR_XCOLDGASS, 
         "metallicity": metallicity_in_solar_units,
         "FLAG_CO": FLAG_CO,
+        "Mstar": Mstar,
     }
 
     XCOLDGASS = pd.DataFrame(data)
