@@ -100,8 +100,6 @@ def XCold_Gass_data_reading(filedir):
         data_table_XCOLDGASS = Table(hdu[1].data)
         
         
-    print("data_table_XCOLDGASS: ", data_table_XCOLDGASS.keys())
-
     # GASS catalog ID
     ID_XCOLDGASS                = data_table_XCOLDGASS['ID'].data
 
