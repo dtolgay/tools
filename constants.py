@@ -5,6 +5,13 @@
 M_sun2gr            				= 1.99e33           # M☉ -> gr
 Msolar2kg                           = 1.989e+30         # M☉ -> kg
 kg2Msolar                           = 1/Msolar2kg       # kg -> M☉ 
+gr2M_sun            				= 1/M_sun2gr        # gr -> M☉
+gr2Msolar                           = gr2M_sun          # Same 
+kg2g                                = 1e3               # kg -> gr
+kg2Msun                             = 1/Msolar2kg       # kg -> Msolar
+
+ten_to_ten_times_Msun_to_Msun     	= 1e10              # 1e10M☉ -> M☉
+
 pc2cm               				= 3.08e18           # pc -> cm 
 pc2m                                = pc2cm * 1e-2      # pc -> m
 kpc2m                               = 1e3 * pc2m        # kpc -> m
@@ -12,13 +19,11 @@ kpc2cm              				= pc2cm*1e3         # kpc -> cm
 kpc2pc              				= 1e3               # kpc -> pc
 pc2kpc              				= 1/kpc2pc          # pc -> kpc
 Mpc2meter                           = 3.086e+22
-gr2M_sun            				= 1/M_sun2gr        # gr -> M☉
-kg2g                                = 1e3               # kg -> gr
-kg2Msun                             = 1/Msolar2kg       # kg -> Msolar
 cm2pc            				   	= 1/pc2cm           # cm -> pc
 cm2kpc                              = cm2pc * 1e-3      # cm -> kpc
 m2cm                                = 100               # m -> cm
-ten_to_ten_times_Msun_to_Msun     	= 1e10              # 1e10M☉ -> M☉
+
+
 year2gigaYear                       = 1e-9              # 1 year -> 1 gigayear
 
 # Solar Metallicity information is taken from paper: 
@@ -31,7 +36,7 @@ c                   = 299792458         # m/s
 u_HAB               = 5.29e-15          # Habing energy density J/m^3
 G0                  = 1.69              # Habing radiation field Unitless
 w2ergs              = 1e7               # W -> erg/s
-Lsolar2ergs         = 3.826e33          # Lsolar -> erg/s         # 3.839e33??? $ 3.85e33 in lequeux the interstellar medium
+Lsolar2ergs         = 3.826e33          # Lsolar -> erg/s. I think the value that I am using right now is true   # 3.839e33??? $ 3.85e33 in lequeux the interstellar medium
 ergs2Lsolar         = 1/Lsolar2ergs     # erg/s -> Lsolar
 ev2K                = 11606             # ev -> K
 year2seconds        = 3.154e7           # year -> seconds 
