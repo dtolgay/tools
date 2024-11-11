@@ -1,6 +1,9 @@
 import glob
 import numpy as np
 from .constants import *
+from . import constants
+import pandas as pd
+from scipy.integrate import simpson
 
 def finding_mass_and_coordinates_of_the_halo_with_most_particle_ahf(snapshot_dir, snapshot_number):
 	print("I am in the function finding_mass_and_coordinates_of_the_halo_with_most_particle_ahf") 
@@ -1270,72 +1273,67 @@ def surface_density_calculator(star_formation_rate, mass_h2, smoothing_length_ga
 ####################################################################################################################################################################
 
 def surface_density_calculator3(x_gas, y_gas, array_that_surface_density_needs_to_be_calculated, cut_off_radius):
+    print("I am in the function surface_density_calculator3")
 
-	print("I am in the function surface_density_calculator3")
+    """This function is used to calculate the surface densities of molecular gas and sfr. 
+    First it creates a 2D mesh for all points between 0 < x < cut_off_radius and 0 < y < cut_off_radius. 
+    Then, if the gas particles are in that mesh, it calculates the surface density in each grid. 
+    Finally, it calculates the mean density.
+    
+    Arguments:
+    ----------
+    array_that_surface_density_needs_to_be_calculated: array-like - float
+        Star formation rate of gas particles or mass_h2
+        Unit: Depends on the input
 
-	"""This function is used to calculate the surface densities of molecular gas and sfr. 
-	First is creates a 2D mesh for all points between 0<x<cut_off_radius and 0<y<cut_off_radius. Then it the gas particles are in that mesh it calculates the 
-	surface density in each grid. Finally I am calculating the mean density.
-	
-	Arguments:
-	----------
-	array_that_surface_density_needs_to_be_calculated: array-like - float
-		star formation rate of gas particles or mass_h2
-		Unit: Depends on the input
+    cut_off_radius: float
+        Maximum radius where surface densities will be calculated to 
+        Unit: kpc
 
-	cut_off_radius= array-like - float
-		Maximum radius where surface densities will be calculated to 
-		Unit: kpc
+    Returns:
+    ----------
+    mean_surface_density: float 
+        Calculated average surface density for the inputted array
+        Unit: .... kpc^-2
+    """
 
-	Returns:
-	----------
-	mean_surface_density: array-like - float 
-		Calculated average surface density for the inputted array
-		Unit: .... kpc^-2
+    import numpy as np
 
-	References: 
-	-----------
+    square_size = 1.0  # kpc
 
-	"""
+    x = np.arange(-1 * cut_off_radius, cut_off_radius + square_size, square_size)
+    y = x 
 
-	import numpy as np
+    xx, yy = np.meshgrid(x, y)
+    squares = np.dstack((xx, yy))
 
-	square_size = 1.0  		# kpc
+    # Define a function to calculate the SFR/area of a given square region
+    def surface_density_of_every_region_calculator(x_gas, y_gas, array_that_surface_density_needs_to_be_calculated, square):
+        # This outputs a boolean array. If the particle is within the square size distance/2 from the center of the square, 
+        # then the boolean returns True; otherwise, it returns False.
+        indices = ((x_gas - square[0])**2 + (y_gas - square[1])**2) <= (square_size / 2)**2   
+        area = np.pi * (square_size / 2)**2
+        # If Boolean returns True, then sfr_surface_density is calculated in that square for the corresponding particles. 
+        return np.sum(array_that_surface_density_needs_to_be_calculated[indices]) / area	
 
-	x = np.arange(-1*cut_off_radius, cut_off_radius+square_size, square_size)
-	y = x 
+    surface_densities = []
+    for square in squares.reshape(-1, 2):
+        surface_density_value_of_every_region = surface_density_of_every_region_calculator(
+            x_gas=x_gas,
+            y_gas=y_gas,
+            array_that_surface_density_needs_to_be_calculated=array_that_surface_density_needs_to_be_calculated,
+            square=square
+        )
+        surface_densities.append(surface_density_value_of_every_region)
 
-	xx,yy = np.meshgrid(x,y)
-	squares = np.dstack((xx, yy))
+    # Calculating the average surface density
+    mean_surface_density = np.mean(surface_densities)
 
-	# Define a function to calculate the SFR/area of a given square region
-	def surface_density_of_every_region_calculator(x_gas, y_gas, array_that_surface_density_needs_to_be_calculated, square):
-		# This outputs a boolean array. If the particle is within the square size distance/2 from the center of the square, then the boolean return True, otherwise
-		# it return False
-	    indices = ((x_gas - square[0])**2 + (y_gas - square[1])**2) <= (square_size/2)**2   
-	    area = np.pi * (square_size/2)**2
-	    # If Boolean returns True, then sfr_surface_density is calculated in that square for the corresponding particles. 
-	    return np.sum(array_that_surface_density_needs_to_be_calculated[indices])/area	
-
-	surface_densities = []
-	for square in squares.reshape(-1,2):
-		surface_density_value_of_every_region = surface_density_of_every_region_calculator(x_gas=x_gas,
-																			   			   y_gas=y_gas,
-														array_that_surface_density_needs_to_be_calculated=array_that_surface_density_needs_to_be_calculated,
-																						   square=square)
-
-		surface_densities.append(surface_density_value_of_every_region)
-
-
-	# Calculating the average surface density
-	mean_surface_density = np.mean(surface_densities)
-
-	return mean_surface_density
+    return mean_surface_density
 
 
 ####################################################################################################################################################################
 
-import numpy as np
 
 # I used the functions in the PFH/pfh_python/gadget_lib/cosmo.py
 
@@ -1363,3 +1361,41 @@ def calculate_stellar_age(scale_factor_star:np.ndarray,
     ages = (t_now - t_form); # should be in gyr    
         
     return ages
+
+
+####################################################################################################################################################################
+
+def sfr_calculator(star_df: pd.DataFrame, within_how_many_Myr:float):
+    # Calculate star formation happened in the last 10 Myr
+    indices = np.where(star_df["age"] <= within_how_many_Myr)[0] # TODO: Change 10 with within_how_many_Myr
+    sfr_star = np.sum(star_df.iloc[indices]["mass"]) / (10 * 1e6)  # Msolar / year
+    return sfr_star
+
+
+def SFR_luminosity(SFR):
+    
+    # Convert SFR to kg/second 
+    epsilon_ff = 8e-4
+    
+    SFR_unit_converted = SFR * constants.Msolar2kg / constants.year2seconds # kg / sec
+    L_sfr = SFR_unit_converted * constants.c**2 * epsilon_ff # Watts
+    
+    return L_sfr * constants.w2ergs # erg / s
+
+
+def calculate_luminosity_from_sed(sed, min_wavelength, max_wavelenght, distance_in_Mpc):
+    
+    condition = (sed['wavelength'] > min_wavelength) & (sed['wavelength'] < max_wavelenght) 
+    filtered_sed = sed[condition].copy()    
+    
+    distance_meter = distance_in_Mpc * constants.Mpc2meter
+    
+    # Integrate the fir luminosity 
+    bolometric_flux = simpson(
+        y = filtered_sed['total_flux'],
+        x = filtered_sed['wavelength']
+    ) # W / m2    
+    
+    lum = bolometric_flux * 4 * np.pi * distance_meter**2 # Watts
+    
+    return lum * constants.w2ergs # erg / s 

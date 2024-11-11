@@ -762,7 +762,7 @@ def average_the_flux_values_kametzsky(kamenetzsky_data):
             
     return data
 
-def kamenetzky_2016(fdir): 
+def kamenetzky_2016(fdir, Lir_lower_limit=None, Lir_higher_limit=None): 
 
     # Define a list to store all rows as dictionaries
     table1 = []
@@ -906,6 +906,21 @@ def kamenetzky_2016(fdir):
 
     high_J_CO = table1.merge(table2, on='ID', how='right') # merge table 2 with table 1. Table 1 stores the information about galaxies
     low_J_CO = table1.merge(table3, on='ID', how='right') # merge table 3 with table 1. Table 1 stores the information about galaxies
+
+
+    ### Filter the galaxies according to the upper and lower Lfir 
+    # Set the boundaries 
+    if Lir_lower_limit is None:
+        Lir_lower_limit = 1       # Allow all lower values
+    if Lir_higher_limit is None:
+        Lir_higher_limit = 1e100    # Essentially no upper limit
+    # Filter 
+    condition = (np.log10(Lir_lower_limit) < high_J_CO['log_Lfir']) &  (high_J_CO['log_Lfir'] < np.log10(Lir_higher_limit))
+    high_J_CO = high_J_CO[condition].copy()
+
+    condition = (np.log10(Lir_lower_limit) < low_J_CO['log_Lfir']) &  (low_J_CO['log_Lfir'] < np.log10(Lir_higher_limit))
+    low_J_CO = low_J_CO[condition].copy()    
+    ###
 
     high_J_CO['log_Lco'] = calculate_Lco_in_observer_units(df = high_J_CO.copy())
     low_J_CO['log_Lco'] = calculate_Lco_in_observer_units(df = low_J_CO.copy())
