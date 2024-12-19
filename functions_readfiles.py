@@ -6,9 +6,15 @@ import pandas as pd
 import numpy as np 
 
 
-def read_cloudy_gas_particles(galaxy_name, galaxy_type, redshift, directory_name):
+def read_cloudy_gas_particles(
+        galaxy_name, 
+        galaxy_type, 
+        redshift, 
+        directory_name,
+        base_fdir = f"/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius"
+    ):
     
-    cloudy_gas_particles_file_directory = f"/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}"
+    cloudy_gas_particles_file_directory = f"{base_fdir}/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}"
     
     # Define the column names based on your description
     gas_column_names = [
@@ -42,7 +48,7 @@ def read_cloudy_gas_particles(galaxy_name, galaxy_type, redshift, directory_name
     
     return cloudy_gas_particles
 
-def read_comprehensive_star_star_particles(galaxy_name, galaxy_type, redshift, directory_name):
+def read_comprehensive_star_particles(galaxy_name, galaxy_type, redshift, directory_name):
     
     dir_path = f"/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}"
     
@@ -87,7 +93,14 @@ def read_skirt_sed_file(galaxy_name, galaxy_type, redshift, directory_name, incl
     )
     return sed
 
-def read_otherProperties(base_dir, galaxy_name, galaxy_type, redshift, directory_name, file_name):
+def read_otherProperties(
+        galaxy_name, 
+        galaxy_type, 
+        redshift, 
+        directory_name, 
+        file_name,
+        base_fdir = f"/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius"
+    ):
     
     column_names = [
         'x',                # (pc)
@@ -115,7 +128,7 @@ def read_otherProperties(base_dir, galaxy_name, galaxy_type, redshift, directory
 
     ####
     data = pd.DataFrame(
-        np.loadtxt(f'{base_dir}/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}/{file_name}'),
+        np.loadtxt(f'{base_fdir}/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}/{file_name}'),
         columns = column_names    
     )
 
@@ -127,3 +140,164 @@ def read_otherProperties(base_dir, galaxy_name, galaxy_type, redshift, directory
     
     
     return data
+
+def read_interpolated_Lline(galaxy_name, galaxy_type, redshift, directory_name, file_name):
+     
+    lines = [
+        "L_ly_alpha",  # [erg s^-1]
+        "L_h_alpha", # [erg s^-1]
+        "L_h_beta", # [erg s^-1]
+        "L_co_10", # [K km s^-1 pc^2] 
+        "L_co_21", # [K km s^-1 pc^2] 
+        "L_co_32", # [K km s^-1 pc^2] 
+        "L_co_43", # [K km s^-1 pc^2] 
+        "L_co_54", # [K km s^-1 pc^2] 
+        "L_co_65", # [K km s^-1 pc^2] 
+        "L_co_76", # [K km s^-1 pc^2] 
+        "L_co_87", # [K km s^-1 pc^2] 
+        "L_13co",  # [K km s^-1 pc^2] 
+        "L_c2", # [erg s^-1]
+        "L_o3_88", # [erg s^-1]
+        "L_o3_5006", # [erg s^-1]
+        "L_o3_4958", # [erg s^-1] 
+    ]
+
+    gas_column_names = [
+        "x",                                    # pc 
+        "y",                                    # pc 
+        "z",                                    # pc 
+        "smoothing_length",                     # pc 
+        "mass",                                 # Msolar
+        "metallicity",                          # Zsolar
+        "temperature",                          # Kelvin
+        "vx",                                   # km/s
+        "vy",                                   # km/s
+        "vz",                                   # km/s
+        "hden",                                 # 1/cm3
+        "radius",                               # pc 
+        "sfr",                                  # Msolar / year
+        "turbulence",                           # km/s
+        "density",                              # gr/cm3
+        "mu_theoretical",                       # 1
+        "average_sobolev_smoothingLength",      # pc 
+        "index",                                # 1
+        "isrf",                                 # G0
+    ] + lines
+
+
+    base_dir = "/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius"
+    fdir = f'{base_dir}/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}/{file_name}'
+
+    gas = pd.DataFrame(
+        np.loadtxt(fname=fdir), 
+        columns=gas_column_names
+    )
+
+    return gas, lines
+
+def read_semianalytical_file(galaxy_name, galaxy_type, redshift, directory_name, file_name):
+
+    # Read semi_analytical_average_sobolev_smoothingLength.txt
+    semi_analytical_column_names = [
+        "x",
+        "y",
+        "z",
+        "smoothing_length",
+        "mass", 
+        "metallicity",
+        "temperature",
+        "vx",
+        "vy",
+        "vz",
+        "hden",
+        "radius",
+        "sfr",
+        "turbulence",
+        "density",
+        "mu_theoretical",
+        "average_sobolev_smoothingLength",
+        "index",
+        "isrf",
+        "h2_mass",
+        "Xco",
+        "L_co_10"
+    ]    
+    
+    base_dir = "/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius"
+    fdir = f'{base_dir}/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}/{file_name}'  
+    
+    semi_analytical = pd.DataFrame(
+        np.loadtxt(fdir),
+        columns=semi_analytical_column_names
+    )    
+
+    return semi_analytical
+
+def read_semianalytical_file_2(galaxy_name, galaxy_type, redshift, directory_name, file_name):
+
+    # Read semi_analytical_average_sobolev_smoothingLength.txt
+
+    semi_analytical_column_names = [
+        "index",                # [1] 
+        "fh2",                  # [1]
+        "Mh2",                  # [Msolar]
+        "dust_optical_depth",   # [1]
+        "alpha_co",             # [Msolar / (K-km s^-1 pc^2)]
+        "L_co"                  # [K-km s^-1 pc^2]
+    ]        
+
+    base_dir = "/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius"
+    fdir = f'{base_dir}/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}/{file_name}'  
+    
+    semi_analytical = pd.DataFrame(
+        np.loadtxt(fdir),
+        columns=semi_analytical_column_names
+    )    
+
+    return semi_analytical
+
+def read_galactic_properties(file_path, file_name):
+    # Read the DataFrame, skipping the header lines
+    galaxies = pd.read_csv(
+        f"{file_path}/{file_name}", 
+        sep=',', 
+    )
+
+
+    galaxies['alpha_co_cloudy'] = galaxies['h2_mass_cloudy'] / galaxies['L_co_10'] 
+    galaxies['X_co_cloudy'] = galaxies['alpha_co_cloudy'] * 6.3e19 
+
+
+    galaxies['alpha_co_semi_analytical'] = galaxies['h2_mass_semi_analytical'] / galaxies['L_co_10']
+    galaxies['X_co_semi_analytical'] = galaxies['alpha_co_semi_analytical'] * 6.3e19 
+
+    return galaxies 
+
+
+def create_Lc2_sfr_relations():
+    """
+    Values are taken from: https://ui.adsabs.harvard.edu/abs/2024MNRAS.528..499L/abstract 
+    Liang, Murray, Tolgay
+    """
+
+    # deLooze+ 2011
+    A_delooze = 7.31 
+    B_delooze = 0.93
+    one_sigma_scatter_delooze = 0.26
+    delooze = pd.DataFrame()
+    delooze['log_sfr'] = np.linspace(np.log10(0.02), np.log10(88), num=1000)
+    delooze['log_L_c2'] = A_delooze + delooze['log_sfr']*B_delooze
+    delooze['log_L_c2_upper'] = delooze['log_L_c2'] + one_sigma_scatter_delooze
+    delooze['log_L_c2_lower'] = delooze['log_L_c2'] - one_sigma_scatter_delooze
+
+    # herrera+ 2015
+    A_herrera = 7.63
+    B_herrera = 0.97
+    one_sigma_scatter_herrera = 0.21
+    herrera = pd.DataFrame()
+    herrera['log_sfr'] = np.linspace(np.log10(1e-3), np.log10(9.6), num=1000)
+    herrera['log_L_c2'] = A_herrera + herrera['log_sfr']*B_herrera
+    herrera['log_L_c2_upper'] = herrera['log_L_c2'] + one_sigma_scatter_herrera
+    herrera['log_L_c2_lower'] = herrera['log_L_c2'] - one_sigma_scatter_herrera
+
+    return herrera, delooze

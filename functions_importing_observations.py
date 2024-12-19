@@ -936,3 +936,46 @@ def kamenetzky_2016(fdir, Lir_lower_limit=None, Lir_higher_limit=None):
 
 
     return high_J_CO, low_J_CO, averaged_data
+
+
+
+###############
+
+# Importing all CO observations 
+def read_CO_observations():
+    
+    base_dir = "/mnt/raid-cita/dtolgay/Observations"
+    
+    ### C0
+    xCOLDGASS_file_path = f"{base_dir}/xCOLDGASS_PubCat.fits"
+    XCOLDGASS_df = XCold_Gass_data_reading(filedir=xCOLDGASS_file_path)
+
+    PHIBSS2_file_path = f"{base_dir}/PHIBSS2_data.xlsx" 
+    PHIBBS2_df = PHIBSS2_data_reading(filedir=PHIBSS2_file_path)
+
+    ALMA_2019_file_path = f"{base_dir}/ALMA_2019_data.xlsx"
+    ALMA_df = ALMA_2019_Data_Reading(filedir=ALMA_2019_file_path)
+
+    Leroy_file_path = f"{base_dir}/Leroy_data.xlsx"
+    Leroy_df, average_radius_r25_times_075_LEROY = Leroy_Data_Reading(filedir=Leroy_file_path)   
+    
+    return XCOLDGASS_df, PHIBBS2_df, ALMA_df, Leroy_df
+
+
+###############
+# Importing C2 observations 
+def read_Cii_observations():
+    base_dir = "/mnt/raid-cita/dtolgay/Observations"
+
+    herrera_2015 = pd.DataFrame(
+        np.loadtxt(f"{base_dir}/Herrera2015.txt"),
+        columns=['sfr', 'unc_sfr', 'L_c2']
+    )
+
+    delooze = pd.DataFrame(
+        np.loadtxt(f"{base_dir}/deLooze2011_corr.txt"),
+        columns=['sfr', 'unc_sfr', 'log_L_c2', 'unc_Lc2']
+    )
+    delooze['L_c2'] = 10**delooze['log_L_c2']    
+
+    return herrera_2015, delooze 

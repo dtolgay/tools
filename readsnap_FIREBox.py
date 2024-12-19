@@ -318,6 +318,7 @@ def check_if_filename_exists(sdir,snum,simulation_name,file_number,snapshot_name
         # Doga added this part
         if not os.path.exists(fname): 
             ## is it a FIREBox file? 
+            file_number = int(file_number)
             file_number = '%03d' %file_number
             fname_base=sdir+'/snapshot_'+ext; 
             fname = fname_base + '/' + simulation_name + '_' + ext + '_' + file_number + extension_touse
