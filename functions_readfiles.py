@@ -141,7 +141,7 @@ def read_otherProperties(
     
     return data
 
-def read_interpolated_Lline(galaxy_name, galaxy_type, redshift, directory_name, file_name):
+def read_interpolated_Lline(galaxy_name, galaxy_type, redshift, directory_name, file_name, base_dir="/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius"):
      
     lines = [
         "L_ly_alpha",  # [erg s^-1]
@@ -185,7 +185,6 @@ def read_interpolated_Lline(galaxy_name, galaxy_type, redshift, directory_name, 
     ] + lines
 
 
-    base_dir = "/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius"
     fdir = f'{base_dir}/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}/{file_name}'
 
     gas = pd.DataFrame(
@@ -194,6 +193,66 @@ def read_interpolated_Lline(galaxy_name, galaxy_type, redshift, directory_name, 
     )
 
     return gas, lines
+
+def read_interpolated_files_usingFilePath(path, interpolation_type):
+     
+    if interpolation_type == "line_emissions":
+        file_specific_columns = [
+            "L_ly_alpha",  # [erg s^-1]
+            "L_h_alpha", # [erg s^-1]
+            "L_h_beta", # [erg s^-1]
+            "L_co_10", # [K km s^-1 pc^2] 
+            "L_co_21", # [K km s^-1 pc^2] 
+            "L_co_32", # [K km s^-1 pc^2] 
+            "L_co_43", # [K km s^-1 pc^2] 
+            "L_co_54", # [K km s^-1 pc^2] 
+            "L_co_65", # [K km s^-1 pc^2] 
+            "L_co_76", # [K km s^-1 pc^2] 
+            "L_co_87", # [K km s^-1 pc^2] 
+            "L_13co",  # [K km s^-1 pc^2] 
+            "L_c2", # [erg s^-1]
+            "L_o3_88", # [erg s^-1]
+            "L_o3_5006", # [erg s^-1]
+            "L_o3_4958", # [erg s^-1] 
+        ]
+    elif interpolation_type == "abundance":
+        file_specific_columns = [
+            'fh2',              # [1] 
+            'fCO',              # [1]
+        ]
+    elif interpolation_type == "temperature":
+        file_specific_columns = ["Th2", "Tco", "T"]
+
+
+    gas_column_names = [
+        "x",                                    # pc 
+        "y",                                    # pc 
+        "z",                                    # pc 
+        "smoothing_length",                     # pc 
+        "mass",                                 # Msolar
+        "metallicity",                          # Zsolar
+        "temperature",                          # Kelvin
+        "vx",                                   # km/s
+        "vy",                                   # km/s
+        "vz",                                   # km/s
+        "hden",                                 # 1/cm3
+        "radius",                               # pc 
+        "sfr",                                  # Msolar / year
+        "turbulence",                           # km/s
+        "density",                              # gr/cm3
+        "mu_theoretical",                       # 1
+        "average_sobolev_smoothingLength",      # pc 
+        "index",                                # 1
+        "isrf",                                 # G0
+    ] + file_specific_columns
+
+
+    gas = pd.DataFrame(
+        np.loadtxt(fname=path), 
+        columns=gas_column_names
+    )
+
+    return gas, file_specific_columns
 
 def read_semianalytical_file(galaxy_name, galaxy_type, redshift, directory_name, file_name):
 

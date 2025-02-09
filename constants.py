@@ -46,5 +46,10 @@ gravitational_constant = 6.6743e-11     # N m^2 kg^-2
 mu_h                = 2.3e-24 / (proton_mass * kg2g)  # Effect of the helium atoms on the total mass ~1.37
 # From A COMPARISON OF METHODS FOR DETERMINING THE MOLECULAR CONTENT OF MODEL GALAXIES. Krumholz fh2 methadology paper
 
+
+# Constants for atomic data 
+mco_over_mh         = 28.01/1            # CO/H mass ratio
+mh2_over_mh         = 2.016/1            # H2/H mass ratio
+
 # Cosmology 
 eV2K                = 11606             # eV -> K
