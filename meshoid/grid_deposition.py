@@ -613,4 +613,4 @@ def GridDensity(f, x, h, center, size, res=100, box_size=-1.0):
                     j += 1
                     if total_wt > 0:
                         grid[gx % res, gy % res, gz % res] += f[i] * kernel / total_wt
-    return grid / (dx * dx * dx)
+    return grid / (dx * dx * dx), x3d # Returning x3d: dt addition

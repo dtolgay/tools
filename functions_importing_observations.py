@@ -512,6 +512,30 @@ def Li_model_sfr_input(sfr):
 
 ################################################################################################################################################
 
+def rachford_2002_number_column_density(filedir):
+
+    # Define the column names
+    columns = [
+        "name", "logN(CH)", "Reference", "log(N(CH+))", "Reference2", 
+        "log(N(CN))", "Reference3", "log(N(CO))", "Reference4", "logN(H2)", 
+        "unc logN(H2)", "logN(0)", "unc logN(0)", "logN(1)", "unc logN(1)", 
+        "T_kin", "unc T_kin", "logN(HI)", "unc log(HI)", "Reference5", "f_H2", "unc f_H2"
+    ]
+
+    # File path
+    fdir = f"{filedir}/rachford_2022.csv"  # Adjust path if needed
+
+    # Read CSV while handling spaces properly
+    data = pd.read_csv(fdir, sep=";", names=columns)
+
+    return data 
+
+if __name__ == "__main__":
+    filedir = "/home/m/murray/dtolgay/Observations"
+    rachford_2002_number_column_density(filedir)
+
+################################################################################################################################################
+
 # Lya functions
 
 
@@ -977,3 +1001,269 @@ def read_Cii_observations():
     delooze['L_c2'] = 10**delooze['log_L_c2']    
 
     return herrera_2015, delooze 
+
+
+    ###############
+
+
+# Reading Kamenetzky+ 2016 results. 
+
+from astropy.cosmology import Planck18 as cosmo  # or use your specific cosmology
+from astropy import units as u
+from astropy.cosmology import z_at_value
+
+def meters_to_Ghz_calculator(wavelength_in_meters):
+    c = 299792458  # m/s
+    frequency_in_Ghz = c / wavelength_in_meters * 1e-9
+    return frequency_in_Ghz
+
+def calculate_Lco_in_observer_units(df):
+
+    """
+    Table contains the information about the measurements and galaxies. This information includes: 
+    1. reshift [1]
+    2. measured flux [Jy km s^-1]
+    3. luminosity distance [Mpc]
+    4. Upper J level of the emission [1]
+    """
+    table = df.copy() # Copy the table to not accidentally change the values in the original dataframe
+    
+    # Change the unit of the calculated CO luminosities 
+    Jup_and_wavelengths = {
+        "1": 2600.05e-6,  # meter
+        "2": 1300.05e-6,
+        "3": 866.727e-6,
+        "4": 650.074e-6,
+        "5": 520.08e-6,
+        "6": 433.438e-6,
+        "7": 371.549e-6,
+        "8": 325.137e-6,
+        "9": 289.199e-6,
+        "10": 260.005e-6,
+        "11": 236.368e-6,
+        "12": 216.672e-6,
+        "13": 200.003e-6,  
+    }    
+    
+    # Calculate Lco in observer units 
+    observed_frequency_in_Ghz = []
+    for _, gal in table.iterrows():
+        rest_frequency_in_Ghz = meters_to_Ghz_calculator(Jup_and_wavelengths[str(gal['Jup'])]) 
+        redshift = gal['redshift']
+        observed_frequency_in_Ghz.append(rest_frequency_in_Ghz / (1 + redshift))
+
+    table['f_obs'] = observed_frequency_in_Ghz # Ghz 
+
+    Lco = 3.25e7 * table["Flux"] * table["d_luminosity"]**2 * (1 + table["redshift"])**(-3) * table['f_obs']**(-2)     
+    
+    log_Lco = np.log10(Lco)
+    
+    return log_Lco
+
+def average_the_flux_values_kametzsky(kamenetzsky_data):
+
+    data = []
+    
+    # Calculate r values
+    galaxy_ids = kamenetzsky_data['ID'].unique()
+
+    for galaxy_id in galaxy_ids:
+        condition = kamenetzsky_data['ID'] == galaxy_id
+        filtered_df = kamenetzsky_data[condition]
+
+        for Jup in filtered_df['Jup'].unique():
+            condition2 = filtered_df['Jup'] == Jup
+            df = filtered_df[condition2]
+
+            # Average the values and only report that 
+            average_Flux = np.sum(df['Flux']) / len(df)
+
+            data.append({
+                'ID': df.iloc[0]['ID'],
+                'Flux': float(average_Flux),
+                'd_luminosity': df.iloc[0]['d_luminosity'],
+                'Jup': Jup,
+                'log_Lfir': df.iloc[0]['log_Lfir'], # No need to average.
+                'redshift': float(df.iloc[0]['redshift'])
+            })
+            
+    data = pd.DataFrame(data)
+            
+    return data
+
+def kamenetzky_2016(fdir, Lir_lower_limit=None, Lir_higher_limit=None): 
+
+    # Define a list to store all rows as dictionaries
+    table1 = []
+
+    with open(f"{fdir}/table1.txt") as f:
+        # Skip the first 30 lines
+        for _ in range(31):
+            next(f)
+        
+        # Process each remaining line
+        for row in f:
+            # Extract data from specific columns
+            ID = row[:16].strip()   # Galaxy identifier    
+            f_ID = np.nan if row[17:18].strip() == '' else row[17:18].strip()  # [a] Flag on ID (1)
+            RAh = row[19:21].strip() # Hour of Right Ascension (J2000)                
+            RAm = row[22:24].strip() # Minute of Right Ascension (J2000)                 
+            RAs = row[25:30].strip() # Second of Right Ascension (J2000)                
+            DE_sign = row[31:32].strip() # Sign of the Declination (J2000)
+            DEd = row[32:34].strip() # Degree of Declination (J2000)                
+            DEm = row[35:37].strip() # Arcminute of Declination (J2000)                
+            DEs = row[38:42].strip() # Arcsecond of Declination (J2000)               
+            logLFIR = row[43:47].strip() or np.nan  # ? Log Far-IR (40-120 um) luminosity
+            D = row[48:52].strip() or np.nan        # Luminosity distance 
+            ndet = row[53:55].strip() or np.nan    # Number of 3{sigma} detections (2) 
+            nul = row[56:58].strip() or np.nan    #  Number of upper limits (2)  
+            FTS = row[59:69].strip()                #  Herschel SPIRE FTS Observation ID
+            Phot = row[70:81].strip()           # Herschel SPIRE Photometer Observation ID    
+            
+            # Append the parsed row as a dictionary to the data list
+            table1.append({
+                "ID": ID,
+    #             "f_ID": f_ID,
+    #             "RAh": RAh,
+    #             "RAm": RAm,
+    #             "RAs": RAs,
+    #             "DE_sign": DE_sign,
+    #             "DEd": DEd,
+    #             "DEm": DEm,
+    #             "DEs": DEs,
+                "log_Lfir": float(logLFIR),
+                "d_luminosity": float(D),
+    #             "ndet": ndet,
+    #             "nul": nul,
+    #             "FTS": FTS,
+    #             "Phot": Phot
+            })
+
+    # Convert the list of dictionaries to a DataFrame
+    table1 = pd.DataFrame(table1)
+
+    # Calculate the redshift using the luminosity distance 
+    luminosity_distances = table1['d_luminosity'].to_numpy().astype(float) * u.Mpc
+    redshifts = np.array(z_at_value(cosmo.luminosity_distance, luminosity_distances, verbose=False))
+    table1['redshift'] = redshifts
+
+
+    ################################################################################
+
+    # Define a list to store all rows as dictionaries
+    table2 = []
+
+    with open(f"{fdir}/table2.txt") as f:
+        # Skip the first 30 lines (if necessary, adjust based on your file structure)
+        for _ in range(19):
+            next(f)
+        
+        # Process each remaining line
+        for row in f:
+            # Extract data from specific columns based on fixed-width positions
+            ID = row[0:16].strip()                   # Galaxy identifier
+            Line = row[17:24].strip()                # Line identifier
+            f_Line = np.nan if row[25:26].strip() == '' else row[25:26].strip()  # Line resolved indicator
+            Flux = row[27:35].strip() or np.nan      # Median line flux
+            b_Flux = row[36:44].strip() or np.nan    # Lower 1σ boundary for Flux
+            B_Flux = row[45:53].strip() or np.nan    # Upper 1σ boundary for Flux
+            UpLim = row[54:62].strip() or np.nan     # 3σ upper limit on Line flux
+            
+            # Append the parsed row as a dictionary to the data list
+            table2.append({
+                "ID": ID,
+                "Line": Line,
+    #             "f_Line": f_Line,
+                "Flux": float(Flux),
+                "b_Flux": float(b_Flux),
+                "B_Flux": float(B_Flux),
+    #             "UpLim": UpLim
+            })
+
+    # Convert the list of dictionaries to a DataFrame
+    table2 = pd.DataFrame(table2)
+
+    # Use only CO
+    condition = table2["Line"].str.startswith("CO")
+    table2 = table2[condition].copy()
+    # Extract the Jup value from the 'Line' column
+    table2['Jup'] = table2['Line'].str.extract(r'CO(\d+)-')[0].astype(int)
+
+    ################################################################################
+
+    # Define a list to store all rows as dictionaries
+    table3 = []
+
+    with open(f"{fdir}/table3.txt") as f:
+        # Skip the first 30 lines (adjust if needed)
+        for _ in range(69):
+            next(f)
+        
+        # Process each remaining line
+        for row in f:
+            # Extract data from specific columns based on fixed-width positions
+            ID = row[0:19].strip()                  # Galaxy identifier
+            Jup = row[20:21].strip() or np.nan      # Upper J level
+            RFlux = row[22:30].strip()              # Reported line flux
+            sigmam = row[31:39].strip()             # Measurement error in RFlux
+            sigmac = row[40:48].strip()             # Calibration error in RFlux
+            x_RFlux = row[49:54].strip()            # Units of RFlux
+            dv = row[55:58].strip() or np.nan       # Line velocity FWHM
+            Omegab = row[59:61].strip() or np.nan   # Beam size FWHM
+            Flux = row[62:70].strip() or np.nan     # This analysis line flux
+            e_Flux = row[71:79].strip() or np.nan   # Total uncertainty in Flux
+            r_RFlux = row[80:82].strip() or np.nan  # Reference for RFlux
+            
+            # Append the parsed row as a dictionary to the data list
+            table3.append({
+                "ID": ID,
+                "Jup": int(Jup),
+    #             "RFlux": RFlux,
+    #             "sigmam": sigmam,
+    #             "sigmac": sigmac,
+    #             "x_RFlux": x_RFlux,
+    #             "dv": dv,
+    #             "Omegab": Omegab,
+                "Flux": float(Flux),
+                "e_Flux": float(e_Flux),
+                "reference": r_RFlux
+            })
+
+    # Convert the list of dictionaries to a DataFrame
+    table3 = pd.DataFrame(table3)
+
+
+    high_J_CO = table1.merge(table2, on='ID', how='right') # merge table 2 with table 1. Table 1 stores the information about galaxies
+    low_J_CO = table1.merge(table3, on='ID', how='right') # merge table 3 with table 1. Table 1 stores the information about galaxies
+
+
+    ### Filter the galaxies according to the upper and lower Lfir 
+    # Set the boundaries 
+    if Lir_lower_limit is None:
+        Lir_lower_limit = 1       # Allow all lower values
+    if Lir_higher_limit is None:
+        Lir_higher_limit = 1e100    # Essentially no upper limit
+    # Filter 
+    condition = (np.log10(Lir_lower_limit) < high_J_CO['log_Lfir']) &  (high_J_CO['log_Lfir'] < np.log10(Lir_higher_limit))
+    high_J_CO = high_J_CO[condition].copy()
+
+    condition = (np.log10(Lir_lower_limit) < low_J_CO['log_Lfir']) &  (low_J_CO['log_Lfir'] < np.log10(Lir_higher_limit))
+    low_J_CO = low_J_CO[condition].copy()    
+    ###
+
+    high_J_CO['log_Lco'] = calculate_Lco_in_observer_units(df = high_J_CO.copy())
+    low_J_CO['log_Lco'] = calculate_Lco_in_observer_units(df = low_J_CO.copy())
+
+    # 
+    averaged_data_low_J = average_the_flux_values_kametzsky(kamenetzsky_data = low_J_CO)
+    averaged_data_high_J = average_the_flux_values_kametzsky(kamenetzsky_data = high_J_CO)
+
+    averaged_data = pd.concat([averaged_data_low_J, averaged_data_high_J])
+
+    averaged_data['log_Lco'] = calculate_Lco_in_observer_units(averaged_data.copy())
+
+
+
+    return high_J_CO, low_J_CO, averaged_data
+
+c

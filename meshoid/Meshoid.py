@@ -622,6 +622,10 @@ class Meshoid:
         -------
         Shape (res,res,res) grid of the density of the conserved quantity
         """
+
+        # TODO: Delete below 
+        print("I am in the DepositToGrid function")
+
         if center is None:
             center = self.center
         if size is None:
@@ -631,11 +635,11 @@ class Meshoid:
 
         h = np.clip(self.kernel_radius, size / (res - 1), 1e100)
 
-        f_grid = GridDensity(
+        f_grid, x3d = GridDensity(
             f, self.pos, h, center, size, res=res, box_size=self.boxsize
         )
 
-        return f_grid
+        return f_grid, x3d
 
     def SurfaceDensity(
         self,
