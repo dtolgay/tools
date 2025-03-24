@@ -48,10 +48,17 @@ def read_cloudy_gas_particles(
     
     return cloudy_gas_particles
 
-def read_comprehensive_star_particles(galaxy_name, galaxy_type, redshift, directory_name):
-    
-    dir_path = f"/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}"
-    
+def read_comprehensive_star_particles(
+        galaxy_name, 
+        galaxy_type, 
+        redshift, 
+        directory_name, 
+        base_fdir = f"/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius",
+    ):
+
+    dir_path = f"{base_fdir}/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}"
+
+
     star_columns = [
         'x',            # (pc)
         'y',            # (pc)

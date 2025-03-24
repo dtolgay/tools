@@ -3,7 +3,6 @@ import numpy as np
 from .constants import *
 from . import constants
 import pandas as pd
-from scipy.integrate import simpson
 
 def finding_mass_and_coordinates_of_the_halo_with_most_particle_ahf(snapshot_dir, snapshot_number):
 	print("I am in the function finding_mass_and_coordinates_of_the_halo_with_most_particle_ahf") 
@@ -1384,18 +1383,20 @@ def SFR_luminosity(SFR):
 
 
 def calculate_luminosity_from_sed(sed, min_wavelength, max_wavelenght, distance_in_Mpc):
+
+	from scipy.integrate import simpson # This is put inside the function because it raises an error when used in Niagara
     
-    condition = (sed['wavelength'] > min_wavelength) & (sed['wavelength'] < max_wavelenght) 
-    filtered_sed = sed[condition].copy()    
-    
-    distance_meter = distance_in_Mpc * constants.Mpc2meter
-    
-    # Integrate the fir luminosity 
-    bolometric_flux = simpson(
-        y = filtered_sed['total_flux'],
-        x = filtered_sed['wavelength']
-    ) # W / m2    
-    
-    lum = bolometric_flux * 4 * np.pi * distance_meter**2 # Watts
-    
-    return lum * constants.w2ergs # erg / s 
+	condition = (sed['wavelength'] > min_wavelength) & (sed['wavelength'] < max_wavelenght) 
+	filtered_sed = sed[condition].copy()    
+
+	distance_meter = distance_in_Mpc * constants.Mpc2meter
+
+	# Integrate the fir luminosity 
+	bolometric_flux = simpson(
+		y = filtered_sed['total_flux'],
+		x = filtered_sed['wavelength']
+	) # W / m2    
+
+	lum = bolometric_flux * 4 * np.pi * distance_meter**2 # Watts
+
+	return lum * constants.w2ergs # erg / s 

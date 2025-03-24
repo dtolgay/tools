@@ -1008,10 +1008,6 @@ def read_Cii_observations():
 
 # Reading Kamenetzky+ 2016 results. 
 
-from astropy.cosmology import Planck18 as cosmo  # or use your specific cosmology
-from astropy import units as u
-from astropy.cosmology import z_at_value
-
 def meters_to_Ghz_calculator(wavelength_in_meters):
     c = 299792458  # m/s
     frequency_in_Ghz = c / wavelength_in_meters * 1e-9
@@ -1092,6 +1088,11 @@ def average_the_flux_values_kametzsky(kamenetzsky_data):
     return data
 
 def kamenetzky_2016(fdir, Lir_lower_limit=None, Lir_higher_limit=None): 
+
+    from astropy.cosmology import Planck18 as cosmo  # or use your specific cosmology
+    from astropy import units as u
+    from astropy.cosmology import z_at_value
+
 
     # Define a list to store all rows as dictionaries
     table1 = []
@@ -1265,5 +1266,3 @@ def kamenetzky_2016(fdir, Lir_lower_limit=None, Lir_higher_limit=None):
 
 
     return high_J_CO, low_J_CO, averaged_data
-
-c
