@@ -48,6 +48,42 @@ def read_cloudy_gas_particles(
     
     return cloudy_gas_particles
 
+def read_comprehensive_gas_particles(
+        galaxy_name, 
+        galaxy_type, 
+        redshift, 
+        directory_name, 
+        base_fdir = f"/mnt/raid-cita/dtolgay/FIRE/post_processing_fire_outputs/skirt/runs_hden_radius",
+    ):
+
+    dir_path = f"{base_fdir}/{galaxy_type}/z{redshift}/{galaxy_name}/{directory_name}"
+    gas_columns = [
+        "x",
+        "y",
+        "z",
+        "smoothing_length",
+        "mass",
+        "metallicity",
+        "temperature",
+        "vx",
+        "vy", 
+        "vz",
+        "hden",
+        "radius",
+        "star_formation_rate",
+        "turbulence",
+        "density",
+        "mu_theoretical",
+        "average_sobolev_smoothingLength", 
+    ]        
+
+    gas_data = pd.DataFrame(
+        np.loadtxt(f"{dir_path}/comprehensive_gas.txt"),
+        columns = gas_columns
+    )
+
+    return gas_data
+
 def read_comprehensive_star_particles(
         galaxy_name, 
         galaxy_type, 
@@ -230,6 +266,8 @@ def read_interpolated_files_usingFilePath(path, interpolation_type):
     elif interpolation_type == "temperature":
         file_specific_columns = ["Th2", "Tco", "T"]
 
+    else:
+        raise ValueError("interpolation_type must be one of 'line_emissions', 'abundance', 'temperature")
 
     gas_column_names = [
         "x",                                    # pc 
