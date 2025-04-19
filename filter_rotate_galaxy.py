@@ -167,6 +167,7 @@ def filter_rotate_galaxy(
     gas_particles, 
     star_particles,   
     snapshot_number = None, # Not important if the galaxy is firebox     
+    R_max = 20.0, # kpc    
 ):
     
     hubble      = header_info['hubble']
@@ -197,7 +198,16 @@ def filter_rotate_galaxy(
         'neutral_hydrogen_fraction': gas_particles['nh'],
         'electron_abundance': gas_particles['ne'],
         'metallicity': gas_particles['z'][:,0],
-        'He_mass_fraction': gas_particles['z'][:,1]
+        'He_mass_fraction': gas_particles['z'][:,1],
+        'C_mass_fraction': gas_particles['z'][:,2],
+        'N_mass_fraction': gas_particles['z'][:,3],
+        'O_mass_fraction': gas_particles['z'][:,4],
+        'Ne_mass_fraction': gas_particles['z'][:,5],
+        'Mg_mass_fraction': gas_particles['z'][:,6],
+        'Si_mass_fraction': gas_particles['z'][:,7],
+        'S_mass_fraction': gas_particles['z'][:,8],
+        'Ca_mass_fraction': gas_particles['z'][:,9],
+        'Fe_mass_fraction': gas_particles['z'][:,10],
         # You can add other fractions as needed
     })
 
@@ -431,7 +441,6 @@ def filter_rotate_galaxy(
     '''
     # Filtering the code to increase its speed
         # To increase the speed of the code I will only consider 20 kpc radius
-    R_max = 20.0
 
     print(f"Considering only {R_max} kpc from the center of the MMH.")
     print(f"Before: len(gas_particles_df): {len(gas_particles_df)} --- len(star_particles_df): {len(star_particles_df)}")
