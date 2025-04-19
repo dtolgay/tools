@@ -25,7 +25,7 @@ m2cm                                = 100               # m -> cm
 
 
 year2gigaYear                       = 1e-9              # 1 year -> 1 gigayear
-
+gigaYear2Megayear                   = 1e3               # 1 gigayear -> 1e3 million year
 # Solar Metallicity information is taken from paper: 
 # SOLAR METALLICITY DERIVED FROM IN SITU SOLAR WIND COMPOSITION by R. von Steiger and T. H. Zurbuchen, 2015
 solar_metallicity 	= 0.02 			        # solar mass fraction

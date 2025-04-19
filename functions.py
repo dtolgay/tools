@@ -1346,16 +1346,17 @@ def quick_lookback_time(z,h=0.71,Omega_M=0.27):
 
 
 def calculate_stellar_age(scale_factor_star:np.ndarray,
-                          time:np.float64)->np.ndarray:
+                          time:np.float64,
+						  h:np.float=0.71)->np.ndarray:
     
     a_form=scale_factor_star
     a_now=time    
     
     z_form=1./a_form-1.
-    t_form=quick_lookback_time(z_form)
+    t_form=quick_lookback_time(z_form, h=h)
     
     z_now=1./a_now-1.
-    t_now=quick_lookback_time(z_now)
+    t_now=quick_lookback_time(z_now, h=h)
     
     ages = (t_now - t_form); # should be in gyr    
         

@@ -9,7 +9,7 @@ import numpy as np
 def sfr_calculator(star_df: pd.DataFrame, within_how_many_Myr:float):
     # Calculate star formation happened in the last 10 Myr
     indices = np.where(star_df["age"] <= within_how_many_Myr)[0] 
-    sfr_star = np.sum(star_df.iloc[indices]["mass"]) / (10 * 1e6)  # Msolar / year
+    sfr_star = np.sum(star_df.iloc[indices]["mass"]) / (within_how_many_Myr * 1e6)  # Msolar / year
     return sfr_star
 
 
