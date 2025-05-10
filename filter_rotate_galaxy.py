@@ -321,11 +321,27 @@ def filter_rotate_galaxy(
         redshift_4_digits = '{0:.3f}'.format(redshift)
             
         galaxy_number = int(galaxy_name.replace("gal", ""))
-            
-        fdir = "/fs/lustre/project/murray/scratch/lliang/FIRE_CO/FIREbox/AHF"
-
-        halos = np.loadtxt(fname = f"{fdir}/FB15N1024.z{redshift_4_digits}.AHF_halos", skiprows=1) 
         
+        # cita clusters
+        try: 
+            fdir = "/fs/lustre/project/murray/scratch/lliang/FIRE_CO/FIREbox/AHF"
+
+            halos = np.loadtxt(fname = f"{fdir}/FB15N1024.z{redshift_4_digits}.AHF_halos", skiprows=1) 
+        
+        # niagara 
+        except: 
+            # fdir = "/fs/lustre/project/murray/scratch/lliang/FIRE_CO/FIREbox/AHF"
+            fdir = "/scratch/m/murray/dtolgay/firebox/FB15N1024/analysis/AHF/halo_new"
+
+            if redshift_4_digits == "0.000":
+                epoch_num = "1200"
+            elif redshift_4_digits == "1.000":
+                epoch_num = "554"
+            elif redshift_4_digits == "2.000":
+                epoch_num = "344"
+
+            halos = np.loadtxt(fname = f"{fdir}/{epoch_num}/FB15N1024.z{redshift_4_digits}.AHF_halos", skiprows=1)         
+
         mass_of_MMH = halos[galaxy_number][3]        
         pass
 

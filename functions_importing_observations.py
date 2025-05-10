@@ -530,15 +530,10 @@ def rachford_2002_number_column_density(filedir):
 
     return data 
 
-if __name__ == "__main__":
-    filedir = "/home/m/murray/dtolgay/Observations"
-    rachford_2002_number_column_density(filedir)
 
 ################################################################################################################################################
 
 # Lya functions
-
-
 def hetdex_data_reading(fdir):
 
     """
@@ -986,8 +981,7 @@ def read_CO_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
 
 ###############
 # Importing C2 observations 
-def read_Cii_observations():
-    base_dir = "/mnt/raid-cita/dtolgay/Observations"
+def read_Cii_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
 
     herrera_2015 = pd.DataFrame(
         np.loadtxt(f"{base_dir}/Herrera2015.txt"),
@@ -1001,7 +995,6 @@ def read_Cii_observations():
     delooze['L_c2'] = 10**delooze['log_L_c2']    
 
     return herrera_2015, delooze 
-
 
     ###############
 

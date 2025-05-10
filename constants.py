@@ -53,9 +53,13 @@ dust2metal          = 0.4                  # metallicity to dust ratio
 avogadro_number     = 6.022e23            # Avogadro's number 
 mco_molecular_mass  = 28.01              # g/mol
 mh2_molecular_mass  = 2.016              # g/mol
+mc_molecular_mass   = 12.01              # g/mol
+mo_molecular_mass   = 16.00              # g/mol
 
 mco_gr              = mco_molecular_mass / avogadro_number  # g
 mh2_gr              = mh2_molecular_mass / avogadro_number  # g
+mcii_gr             = mco_molecular_mass / avogadro_number  # g
+moiii_gr            = mo_molecular_mass / avogadro_number  # g
 
 # Cosmology 
 eV2K                = 11606             # eV -> K

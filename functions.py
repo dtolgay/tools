@@ -1346,8 +1346,8 @@ def quick_lookback_time(z,h=0.71,Omega_M=0.27):
 
 
 def calculate_stellar_age(scale_factor_star:np.ndarray,
-                          time:np.float64,
-						  h:np.float=0.71)->np.ndarray:
+                          time:float,
+						  h:float=0.71)->np.ndarray:
     
     a_form=scale_factor_star
     a_now=time    
@@ -1367,8 +1367,8 @@ def calculate_stellar_age(scale_factor_star:np.ndarray,
 
 def sfr_calculator(star_df: pd.DataFrame, within_how_many_Myr:float):
     # Calculate star formation happened in the last 10 Myr
-    indices = np.where(star_df["age"] <= within_how_many_Myr)[0] # TODO: Change 10 with within_how_many_Myr
-    sfr_star = np.sum(star_df.iloc[indices]["mass"]) / (10 * 1e6)  # Msolar / year
+    indices = np.where(star_df["age"] <= within_how_many_Myr)[0]
+    sfr_star = np.sum(star_df.iloc[indices]["mass"]) / (within_how_many_Myr * 1e6)  # Msolar / year
     return sfr_star
 
 
