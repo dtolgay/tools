@@ -402,6 +402,9 @@ def allsmog_cicone2017_data_reading(filedir):
 
     return merged_df
 
+if __name__ == "__main__":
+    fdir = 
+
 ###############################################################################################################################################
 
 def PHIBSS2_data_reading(filedir):
@@ -1219,9 +1222,11 @@ def read_CO_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
     ALMA_df = ALMA_2019_Data_Reading(filedir=ALMA_2019_file_path)
 
     Leroy_file_path = f"{base_dir}/Leroy_data.xlsx"
-    Leroy_df, average_radius_r25_times_075_LEROY = Leroy_Data_Reading(filedir=Leroy_file_path)   
+    Leroy_df, average_radius_r25_times_075_LEROY = Leroy_Data_Reading(filedir=Leroy_file_path)
+
+    cicone_df = allsmog_cicone2017_data_reading(filedir=f"{base_dir}")   
     
-    return XCOLDGASS_df, PHIBBS2_df, ALMA_df, Leroy_df
+    return XCOLDGASS_df, PHIBBS2_df, ALMA_df, Leroy_df, cicone_df
 
 
 ###############
