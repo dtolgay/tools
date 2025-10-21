@@ -277,6 +277,7 @@ def allsmog_cicone2017_data_reading(filedir):
         3. They have redshifts 0.01 < z < 0.03
         4. They have metallicities 12 + log(O/H) > 8.5 (based on the Tremonti et al. 2004 mass-metallicity relation)
     '''
+    print("I am in the function allsmog_cicone2017_data_reading")
 
 
     fpath = f"{filedir}/allsmog_cicone_2017/cicone_all_data.tsv"
@@ -399,11 +400,12 @@ def allsmog_cicone2017_data_reading(filedir):
     upper_limit_cond = merged_df['l_Int'] == '<'
     merged_df['detection_flag'] = np.where(upper_limit_cond, 2, 1)
 
+    ## Change the Lco to Lco21 
+    merged_df['Lco21'] = merged_df['L_CO']  # K.km/s.pc+2
+    merged_df.drop(columns=['L_CO'], inplace=True)
 
     return merged_df
 
-if __name__ == "__main__":
-    fdir = 
 
 ###############################################################################################################################################
 
