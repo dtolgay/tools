@@ -409,6 +409,8 @@ def allsmog_cicone2017_data_reading(filedir):
 
 def schruba2012_data_reading(filedir):
 
+    print("I am in the function schruba2012_data_reading")
+
     path2file = f"{filedir}/heracles_schruba_2012/table2.csv"
 
     # Name,D (Mpc),Ref_D,12 + logO/H,Ref_Metallicity,M_B (mag),Ref_M_B,log L_CO1-0 (K km s^-1 pc^2),Ref_L_CO1-0,log SFR (M_sun yr^-1),Ref_SFR
@@ -422,8 +424,8 @@ def schruba2012_data_reading(filedir):
         "Ref_Metallicity",
         "M_B_mag",
         "Ref_M_B",
-        "log_L_CO1_0", # K_km_s_pc2
-        "Ref_L_CO1_0",
+        "log_LCO_10", # K_km_s_pc2
+        "Ref_LCO_10",
         "log_SFR", # Msolar / year
         "Ref_SFR"
     ]
@@ -431,9 +433,9 @@ def schruba2012_data_reading(filedir):
     
     data = pd.read_csv(path2file, skiprows=1, names=columns)
     
-    upper_limit_condition = data['log_L_CO1_0'].str.contains('<')
+    upper_limit_condition = data['log_LCO_10'].str.contains('<')
     data['detection_flag'] = np.where(upper_limit_condition, 2, 1)
-    data['log_L_CO1_0'] = data['log_L_CO1_0'].str.replace('<', '').astype(float)
+    data['log_LCO_10'] = data['log_LCO_10'].str.replace('<', '').astype(float)
 
     return data
 
