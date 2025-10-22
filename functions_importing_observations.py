@@ -407,6 +407,36 @@ def allsmog_cicone2017_data_reading(filedir):
     return merged_df
 
 
+def schruba2012_data_reading(filedir):
+
+    path2file = f"{filedir}/heracles_schruba_2012/table2.csv"
+
+    # Name,D (Mpc),Ref_D,12 + logO/H,Ref_Metallicity,M_B (mag),Ref_M_B,log L_CO1-0 (K km s^-1 pc^2),Ref_L_CO1-0,log SFR (M_sun yr^-1),Ref_SFR
+
+
+    columns = [
+        "Name",
+        "D_Mpc",
+        "Ref_D",
+        "12_plus_logO_over_H",
+        "Ref_Metallicity",
+        "M_B_mag",
+        "Ref_M_B",
+        "log_L_CO1_0", # K_km_s_pc2
+        "Ref_L_CO1_0",
+        "log_SFR", # Msolar / year
+        "Ref_SFR"
+    ]
+
+    
+    data = pd.read_csv(path2file, skiprows=1, names=columns)
+    
+    upper_limit_condition = data['log_L_CO1_0'].str.contains('<')
+    data['detection_flag'] = np.where(upper_limit_condition, 2, 1)
+    data['log_L_CO1_0'] = data['log_L_CO1_0'].str.replace('<', '').astype(float)
+
+    return data
+
 ###############################################################################################################################################
 
 def PHIBSS2_data_reading(filedir):
@@ -828,12 +858,6 @@ def twelve_plus_logOH_to_solar_metallicity(X1, X_solar=8.69):
     
     return Z
 
-twelve_plus_logOH_to_solar_metallicity(X1 = 8)
-
-if __name__ == "__main__":
-    fdir = "/home/dtolgay/Observations"
-    miville_deschenes_2017(fdir)
-
 
 ###############################################################################################################################################
 
@@ -1227,8 +1251,10 @@ def read_CO_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
     Leroy_df, average_radius_r25_times_075_LEROY = Leroy_Data_Reading(filedir=Leroy_file_path)
 
     cicone_df = allsmog_cicone2017_data_reading(filedir=f"{base_dir}")   
+
+    schruba2012_df = schruba2012_data_reading(filedir=base_dir)
     
-    return XCOLDGASS_df, PHIBBS2_df, ALMA_df, Leroy_df, cicone_df
+    return XCOLDGASS_df, PHIBBS2_df, ALMA_df, Leroy_df, cicone_df, schruba2012_df
 
 
 ###############
