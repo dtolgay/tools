@@ -407,11 +407,11 @@ def allsmog_cicone2017_data_reading(filedir):
     return merged_df
 
 
-def schruba2012_data_reading(filedir):
+def krumholz_2011_data_reading(filedir):
 
-    print("I am in the function schruba2012_data_reading")
+    print("I am in the function krumholz_2011_data_reading")
 
-    path2file = f"{filedir}/heracles_schruba_2012/table2.csv"
+    path2file = f"{filedir}/krumholz_2011_lowZ/table2_schruba.csv"
 
     # Name,D (Mpc),Ref_D,12 + logO/H,Ref_Metallicity,M_B (mag),Ref_M_B,log L_CO1-0 (K km s^-1 pc^2),Ref_L_CO1-0,log SFR (M_sun yr^-1),Ref_SFR
 
@@ -1254,9 +1254,9 @@ def read_CO_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
 
     cicone_df = allsmog_cicone2017_data_reading(filedir=f"{base_dir}")   
 
-    schruba2012_df = schruba2012_data_reading(filedir=base_dir)
+    krumholz_2011 = krumholz_2011_data_reading(filedir=base_dir)
     
-    return XCOLDGASS_df, PHIBBS2_df, ALMA_df, Leroy_df, cicone_df, schruba2012_df
+    return XCOLDGASS_df, PHIBBS2_df, ALMA_df, Leroy_df, cicone_df, krumholz_2011
 
 
 ###############
