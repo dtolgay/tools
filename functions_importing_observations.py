@@ -548,8 +548,6 @@ def PHIBSS2_data_reading(filedir):
 
     return PHIBBS2
 
-
-
 ###############################################################################################################################################
 
 def ALMA_2019_Data_Reading(filedir):
@@ -859,7 +857,6 @@ def twelve_plus_logOH_to_solar_metallicity(X1, X_solar=8.69):
     Z = mO_over_mH / mO_over_mH_solar
     
     return Z
-
 
 ###############################################################################################################################################
 
@@ -1234,8 +1231,257 @@ def james_2024(fdir):
 
 
 ###############################################################################################################################################
+### CO SLED observations
+
+def braine_combes_1992_data_reading(filedir):
+
+    print("I am in the function braine_combes_1992_data_reading")
+
+    path2file = f"{filedir}/co_sled_observations/braine_combes_1992/data_braine_combes.csv"
+
+    new_column_names = {
+        "source": "soruce",
+        "distance (Mpc)": "distance", 
+        "incl (°)": "inc",
+        "class": "clas",
+        "nucleus": "nucleus",
+        "Tmb dV CO(1-0)": "Ico10",
+        "Tmb dV CO(2-1)": "Ico21",
+        "line ratio (convolved)": "R21",
+        "log M(HI)": "log(M_HI)",
+        "log M(H2)": "log(M_H2)",
+        "log Blue luminosity": "log(Blue Luminosity)",
+        "log FIR luminosity": "log(L_FIR)",
+    }
+
+    data = pd.read_csv(path2file, sep=",")
+    for old_name, new_name in new_column_names.items():
+        data.rename(columns={old_name: new_name}, inplace=True)
+
+    # Clean * from the values in all columns 
+    for col in data.columns:
+        data[col] = data[col].astype(str).str.replace('*', '', regex=False).str.strip()
+
+    # Get the columns with + or ± sign. Get the number next to it and make a new column with _error suffix
+    columns_with_plus_minus = ["Ico10", "Ico21"]
+    for col in columns_with_plus_minus:
+        data[[f"{col}", f"{col}_error"]] = data[col].apply(lambda x: pd.Series(split_plus_minus(x, symbols=['±', '+'])))
+
+    # Change columns with only - to NaN
+    data.replace('-', np.nan, inplace=True)
+
+    print(data.head())
+
+    return data
+
+def meier_2001_data_reading(filedir):
+
+    print("I am in the function meier_2001_data_reading")
+
+    path2file = f"{filedir}/co_sled_observations/meier_2001/table1_with_ratios_and_errors.csv"
+
+    data = pd.read_csv(path2file, sep=",", engine='python')
+
+    new_column_names = {
+        "Galaxy": "name",
+        "RA (B1950)": "RA",
+        "Dec (B1950)": "Dec",
+        "Distance (Mpc)": "D_Mpc",
+        "mB": "mB",
+        "IRAS 60/100 (Jy)": "iras_60_100",
+        "Td (K)": "Tdust",
+        "log LFIR (Lsun)": "log_LFIR",
+        "log M_HI (Msun)": "log_M_HI",
+        "[O/H]": "12+log(O/H)",
+        "References": "references",
+        "PS_R31": "ps_r31",
+        "PS_R32": "ps_r32",
+        "PS_R21": "ps_r21",
+        "U_R31": "u_r31",
+        "U_R32": "u_r32",
+        "U_R21": "u_r21",
+        "PS_R31_err": "ps_r31_err",
+        "PS_R32_err": "ps_r32_err",
+        "PS_R21_err": "ps_r21_err",
+        "U_R31_err": "u_r31_err",
+        "U_R32_err": "u_r32_err",
+        "U_R21_err": "u_r21_err",
+        "detection_flag": "detection_flag",
+        "Tex": "Tex",
+        "Xco_divided_by_XcoMW": "Xco_divided_by_XcoMW",
+        "Mmol": "m_mol"
+    }
+
+    for old_name, new_name in new_column_names.items():
+        data.rename(columns={old_name: new_name}, inplace=True)
+
+    return data
+
+def hatot_stutzki_2003_data_reading(filedir):
+
+    print("I am in the function hatot_stutzki_2003_data_reading")
+
+    path2file = f"{filedir}/co_sled_observations/hatot_stutzki_2003/table2.csv"
+
+    data = pd.read_csv(path2file, sep=",")
+
+    ## Change - with NaN 
+    data = data.replace(['-', '–'], np.nan)
+
+    return data 
+
+def nikolic_2007_data_reading(filedir):
+
+    print("I am in the function nikolic_2007_data_reading")
+    path2file = f"{filedir}/co_sled_observations/nikolic_2007/table2.csv"
+
+    data = pd.read_csv(path2file, sep=",")
 
 
+    new_column_names = {
+       "Cloud": "cloud",
+       "12CO_J10": "Ico10",
+       "12CO_J21": "Ico21",
+       "12CO_J32": "Ico32",
+       "13CO_J10": "I13co10",
+       "13CO_J21": "I13co21",
+       "CS_J21": "Ics21",
+       "CS_J32": "Ics32",
+       "Delta_v": "delta_v",
+    }
+
+    for old_name, new_name in new_column_names.items():
+        data.rename(columns={old_name: new_name}, inplace=True)
+
+    ## Detect columns with paranthesis. Remove paranthesis and make new columns with _error suffix. The example value is like 12.3 (1.2)
+    # Get rid of all ")", Change all " (" to "±". Now the values are like 12.3±1.2
+    data = data.replace(r'\)', '', regex=True)
+    data = data.replace(r' \(', '±', regex=True)
+
+
+    columns_with_parenthesis = ["Ico10", "Ico21", "Ico32", "I13co10", "I13co21", "Ics21", "Ics32"]
+    for col in columns_with_parenthesis:
+        data[[f"{col}", f"{col}_error"]] = data[col].apply(lambda x: pd.Series(split_plus_minus(x, symbols=['±'])))
+
+    return data
+
+def cormier_2014_data_reading(filedir):
+
+    print("I am in the function cornier_2014_data_reading")
+
+    # Read table 1 
+    path2Table1 = f"{filedir}/co_sled_observations/cormier_2014/Table1_Cormier2014.csv"
+    table1 = pd.read_csv(path2Table1, sep=",")
+
+    new_column_names_table1 = {
+        "Galaxy": "name",
+        "Coordinates (J2000)": "coordinates",
+        "Distance (Mpc)": "d_mpc",
+        "Optical size": "optical_size",
+        "Metallicity O/H": "12+log(O/H)",
+        "MB (mag)": "MB_mag",
+        "M_HI (10^9 Msun)": "M_HI",
+        "L_TIR (10^9 Lsun)": "L_TIR",
+        "L_Halpha (10^7 Lsun)": "L_Ha",
+        "L_FUV (10^9 Lsun)": "L_FUV",
+    }
+    # Multiply with the factors for M_HI, L_TIR, L_Halpha, L_FUV
+    factors = {
+        "M_HI": 1e9,
+        "L_TIR": 1e9,
+        "L_Ha": 1e7,
+        "L_FUV": 1e9,
+    }
+    for old_name, new_name in new_column_names_table1.items():
+        table1.rename(columns={old_name: new_name}, inplace=True)
+        if new_name in factors:
+            table1[new_name] = table1[new_name] * factors[new_name]
+
+
+    path2Table2 = f"{filedir}/co_sled_observations/cormier_2014/Table2_Cormier2014.csv"
+    table2 = pd.read_csv(path2Table2, sep=",")
+    new_column_names_table2 = {
+        "Galaxy": "name",
+        "Line": "line",
+        "Center": "center",
+        "Beam (arcsec)": "beam_arcsec",
+        "Tmb (mK)": "Tmb",
+        "Velocity (km/s)": "velocity",
+        "ΔV (km/s)": "delta_v",
+        "ICO (K km/s)": "Ico",
+        "LCO (Lsun)": "Lco_Lsolar",
+        "Reference": "reference",
+    }
+    for old_name, new_name in new_column_names_table2.items():
+        table2.rename(columns={old_name: new_name}, inplace=True)
+    
+    print(table2['name'].unique())
+    print(table2['line'].unique())
+    print(table2['center'].unique())
+
+    # Select NGC 625 with line name CO(1-0) when center == (0,0), delete other CO(1-0) lines for this galaxy
+    # First find the indices to drop 
+    # indices = table2[(table2['name'] == 'NGC 625') & (table2['line'] == 'CO(1-0)') & (table2['center'] != '(0,0)')].index
+    drop_indices = table2[(table2['name'] == 'NGC 625') & (table2['line'] == 'CO(1–0)') & (table2['center'] != '(0,0)')].index
+    # Drop these indices 
+    table2 = table2.drop(drop_indices)
+
+    # Change '–' with '-' in the line names
+    table2['line'] = table2['line'].str.replace('–', '-')
+
+    # Detection flag 
+    table2['detection_flag'] = np.where(table2['Ico'].str.contains('<'), 2, 1) # 1 for detection, 2 for upper limit
+    # Clean < sign from the Ico column
+    for col in ['Tmb', 'Ico', 'Lco_Lsolar']:
+        table2[col] = table2[col].astype(str).str.replace('<', '', regex=False).str.strip()
+
+    # Delete the upper limit rows for now
+    table2 = table2[table2['detection_flag'] == 1]
+
+    # Seperate columns with ± 
+    columns_with_plus_minus = ["Ico"]
+    for col in columns_with_plus_minus:
+        table2[[f"{col}", f"{col}_error"]] = table2[col].apply(lambda x: pd.Series(split_plus_minus(x, symbols=['±'])))
+
+
+    # Delete the rows that contain total in their beam_arcsec column
+    table2 = table2[~table2['beam_arcsec'].str.contains('total', case=False, na=False)]
+
+    ## Change the table such that each galaxy will have only one row that contains the transition of CO(1-0), CO(2-1), CO(3-2) with their intensitites Ico.
+    intensities = table2.pivot_table(index='name', columns='line', values=['Ico', 'Ico_error', 'beam_arcsec', 'Tmb', 'velocity', 'delta_v', 'Lco_Lsolar', 'detection_flag'], aggfunc='first')
+    intensities.columns = ['_'.join(col).strip() for col in intensities.columns.values]
+    intensities = intensities.reset_index()
+
+    # Rename the column names
+    column_names_change = {
+        "Ico_CO(1-0)": "Ico10",
+        "Ico_CO(2-1)": "Ico21",
+        "Ico_CO(3-2)": "Ico32",
+        "Lco_Lsolar_CO(1-0)": "Lco10_Lsolar",
+        "Lco_Lsolar_CO(2-1)": "Lco21_Lsolar",
+        "Lco_Lsolar_CO(3-2)": "Lco32_Lsolar",
+    }
+    intensities.rename(columns=column_names_change, inplace=True)
+
+    # Merge two tables based on the name 
+    data = pd.merge(intensities, table1, on='name', how='left', validate='one_to_one')
+
+    return data
+
+def split_plus_minus(val, symbols=['±', '+']):
+    if isinstance(val, str) and any(symbol in val for symbol in symbols):
+        for symbol in symbols:
+            if symbol in val:
+                value, error = val.split(symbol)
+                break
+        return float(value.strip()), float(error.strip())
+    return val, None  # Leave original value if no ± or +
+
+if __name__ == "__main__": 
+    data = cormier_2014_data_reading(filedir="/mnt/raid-cita/dtolgay/Observations")
+    # print(data.head())
+
+###############################################################################################################################################
 # Importing all CO observations 
 def read_CO_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
     
@@ -1277,6 +1523,7 @@ def read_Cii_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
     return herrera_2015, delooze 
 
     ###############
+
 
 
 ###############################################################################################################################################
