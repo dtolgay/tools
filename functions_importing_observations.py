@@ -1415,10 +1415,6 @@ def cormier_2014_data_reading(filedir):
     for old_name, new_name in new_column_names_table2.items():
         table2.rename(columns={old_name: new_name}, inplace=True)
     
-    print(table2['name'].unique())
-    print(table2['line'].unique())
-    print(table2['center'].unique())
-
     # Select NGC 625 with line name CO(1-0) when center == (0,0), delete other CO(1-0) lines for this galaxy
     # First find the indices to drop 
     # indices = table2[(table2['name'] == 'NGC 625') & (table2['line'] == 'CO(1-0)') & (table2['center'] != '(0,0)')].index
@@ -1468,6 +1464,39 @@ def cormier_2014_data_reading(filedir):
 
     return data
 
+def daddi_2015_data_reading(filedir):
+
+    print("I am in the function daddi_2015_data_reading")
+
+    path2file = f"{filedir}/co_sled_observations/daddi_2015/daddi_data.csv"
+    data = pd.read_csv(path2file, sep=",")
+
+    # Change column names
+    new_column_names = {
+        "Source": "source",
+        "Redshift": "redshift",
+        "Delta_v_km_s": "delta_v_km_s",
+        "ICO_1-0_val": "Ico10_Jy_km_s",
+        "ICO_2-1_val": "Ico21_Jy_km_s",
+        "ICO_3-2_val": "Ico32_Jy_km_s",
+        "ICO_5-4_val": "Ico54_Jy_km_s",
+        "f1.3mm_mJy_val": "f1.3mm_mJy",
+        "R21_val": "R21", # Temperature ratio
+        "R31_val": "R31",
+        "R51_val": "R51",
+        "logLir": "log_Lir",
+        "logLir_err": "log_Lir_err",
+    }
+
+    for old_name, new_name in new_column_names.items():
+        data.rename(columns={old_name: new_name}, inplace=True)
+
+    # Change data type to float for Ico and R columns 
+    for col in ["Ico10_Jy_km_s", "Ico21_Jy_km_s", "Ico32_Jy_km_s", "Ico54_Jy_km_s", "R21", "R31", "R51"]:
+        data[col] = pd.to_numeric(data[col], errors='coerce')
+
+    return data
+
 def split_plus_minus(val, symbols=['±', '+']):
     if isinstance(val, str) and any(symbol in val for symbol in symbols):
         for symbol in symbols:
@@ -1478,8 +1507,8 @@ def split_plus_minus(val, symbols=['±', '+']):
     return val, None  # Leave original value if no ± or +
 
 if __name__ == "__main__": 
-    data = cormier_2014_data_reading(filedir="/mnt/raid-cita/dtolgay/Observations")
-    # print(data.head())
+    data = daddi_2015_data_reading(filedir="/mnt/raid-cita/dtolgay/Observations")
+    print(data.head())
 
 ###############################################################################################################################################
 # Importing all CO observations 
