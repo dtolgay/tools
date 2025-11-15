@@ -1235,6 +1235,10 @@ def james_2024(fdir):
 
 def braine_combes_1992_data_reading(filedir):
 
+    '''
+    The units for calculating R21 is Ico21 / Ico10 in the units of K km s^-1
+    '''
+
     print("I am in the function braine_combes_1992_data_reading")
 
     path2file = f"{filedir}/co_sled_observations/braine_combes_1992/data_braine_combes.csv"
@@ -1245,9 +1249,9 @@ def braine_combes_1992_data_reading(filedir):
         "incl (°)": "inc",
         "class": "clas",
         "nucleus": "nucleus",
-        "Tmb dV CO(1-0)": "Ico10",
-        "Tmb dV CO(2-1)": "Ico21",
-        "line ratio (convolved)": "R21",
+        "Tmb dV CO(1-0)": "Ico10", # K km s^-1
+        "Tmb dV CO(2-1)": "Ico21", # K km s^-1
+        "line ratio (convolved)": "R21", # Ico21 / Ico10 in the units of K km s^-1
         "log M(HI)": "log(M_HI)",
         "log M(H2)": "log(M_H2)",
         "log Blue luminosity": "log(Blue Luminosity)",
@@ -1270,11 +1274,23 @@ def braine_combes_1992_data_reading(filedir):
     # Change columns with only - to NaN
     data.replace('-', np.nan, inplace=True)
 
-    print(data.head())
+    # Change the data types of the columns to float where possible
+    for col in data.columns:
+        try:
+            data[col] = data[col].astype(float)
+        except ValueError:
+            pass  # If conversion fails, keep the original data type
+    
+    ## Find the error in R21 using error propagation formula 
+    data['R21_error_calculated'] = data['R21'] * np.sqrt( (data['Ico21_error']/data['Ico21'])**2 + (data['Ico10_error']/data['Ico10'])**2 )
 
     return data
 
 def meier_2001_data_reading(filedir):
+
+    '''
+    The units for calculating R21 is Ico21 / Ico10 in the units of K km s^-1
+    '''
 
     print("I am in the function meier_2001_data_reading")
 
@@ -1294,7 +1310,7 @@ def meier_2001_data_reading(filedir):
         "log M_HI (Msun)": "log_M_HI",
         "[O/H]": "12+log(O/H)",
         "References": "references",
-        "PS_R31": "ps_r31",
+        "PS_R31": "ps_r31", # Ico32 / Ico10 in the units of K km s^-1 
         "PS_R32": "ps_r32",
         "PS_R21": "ps_r21",
         "U_R31": "u_r31",
@@ -1318,6 +1334,9 @@ def meier_2001_data_reading(filedir):
     return data
 
 def hatot_stutzki_2003_data_reading(filedir):
+    '''
+    The units for calculating R21 is Ico21 / Ico10 in the units of K km s^-1
+    '''
 
     print("I am in the function hatot_stutzki_2003_data_reading")
 
@@ -1340,9 +1359,9 @@ def nikolic_2007_data_reading(filedir):
 
     new_column_names = {
        "Cloud": "cloud",
-       "12CO_J10": "Ico10",
-       "12CO_J21": "Ico21",
-       "12CO_J32": "Ico32",
+       "12CO_J10": "Ico10", # K km s^-1
+       "12CO_J21": "Ico21", # K km s^-1
+       "12CO_J32": "Ico32", # K km s^-1
        "13CO_J10": "I13co10",
        "13CO_J21": "I13co21",
        "CS_J21": "Ics21",
@@ -1362,6 +1381,11 @@ def nikolic_2007_data_reading(filedir):
     columns_with_parenthesis = ["Ico10", "Ico21", "Ico32", "I13co10", "I13co21", "Ics21", "Ics32"]
     for col in columns_with_parenthesis:
         data[[f"{col}", f"{col}_error"]] = data[col].apply(lambda x: pd.Series(split_plus_minus(x, symbols=['±'])))
+
+    # Calculate line ratio
+    data['R21'] = data['Ico21'] / data['Ico10'] # Temperature ratio CO(2-1)/CO(1-0) in the units of K km s^-1
+    data['R32'] = data['Ico32'] / data['Ico21'] # Temperature ratio CO(3-2)/CO(2-1) in the units of K km s^-1
+    data['R31'] = data['Ico32'] / data['Ico10'] # Temperature ratio CO(3-2)/CO(1-0) in the units of K km s^-1
 
     return data
 
@@ -1408,7 +1432,7 @@ def cormier_2014_data_reading(filedir):
         "Tmb (mK)": "Tmb",
         "Velocity (km/s)": "velocity",
         "ΔV (km/s)": "delta_v",
-        "ICO (K km/s)": "Ico",
+        "ICO (K km/s)": "Ico", # K km s^-1
         "LCO (Lsun)": "Lco_Lsolar",
         "Reference": "reference",
     }
@@ -1450,7 +1474,7 @@ def cormier_2014_data_reading(filedir):
 
     # Rename the column names
     column_names_change = {
-        "Ico_CO(1-0)": "Ico10",
+        "Ico_CO(1-0)": "Ico10", # K km s^-1
         "Ico_CO(2-1)": "Ico21",
         "Ico_CO(3-2)": "Ico32",
         "Lco_Lsolar_CO(1-0)": "Lco10_Lsolar",
@@ -1458,6 +1482,13 @@ def cormier_2014_data_reading(filedir):
         "Lco_Lsolar_CO(3-2)": "Lco32_Lsolar",
     }
     intensities.rename(columns=column_names_change, inplace=True)
+
+
+    # Calculate the line ratios 
+    intensities['R21'] = intensities['Ico21'] / intensities['Ico10'] # Temperature ratio CO(2-1)/CO(1-0) in the units of K km s^-1
+    intensities['R32'] = intensities['Ico32'] / intensities['Ico21'] # Temperature ratio CO(3-2)/CO(2-1) in the units of K km s^-1
+    intensities['R31'] = intensities['Ico32'] / intensities['Ico10'] # Temperature ratio CO(3-2)/CO(1-0) in the units of K km s^-1
+
 
     # Merge two tables based on the name 
     data = pd.merge(intensities, table1, on='name', how='left', validate='one_to_one')
@@ -1481,7 +1512,7 @@ def daddi_2015_data_reading(filedir):
         "ICO_3-2_val": "Ico32_Jy_km_s",
         "ICO_5-4_val": "Ico54_Jy_km_s",
         "f1.3mm_mJy_val": "f1.3mm_mJy",
-        "R21_val": "R21", # Temperature ratio
+        "R21_val": "R21", # Temperature ratio CO(2-1)/CO(1-0) in the units of K km s^-1
         "R31_val": "R31",
         "R51_val": "R51",
         "logLir": "log_Lir",
@@ -1533,6 +1564,16 @@ def read_CO_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
     
     return XCOLDGASS_df, PHIBBS2_df, ALMA_df, Leroy_df, cicone_df, krumholz_2011
 
+def read_CO_Sled_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
+
+    braine_combes_1992 = braine_combes_1992_data_reading(filedir=base_dir)
+    meier_2001 = meier_2001_data_reading(filedir=base_dir)
+    hatot_stutzki_2003 = hatot_stutzki_2003_data_reading(filedir=base_dir)
+    nikolic_2007 = nikolic_2007_data_reading(filedir=base_dir)
+    cormier_2014 = cormier_2014_data_reading(filedir=base_dir)
+    daddi_2015 = daddi_2015_data_reading(filedir=base_dir)
+
+    return braine_combes_1992, meier_2001, hatot_stutzki_2003, nikolic_2007, cormier_2014, daddi_2015
 
 ###############
 # Importing C2 observations 
