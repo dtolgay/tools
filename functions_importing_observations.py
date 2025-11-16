@@ -1286,6 +1286,110 @@ def braine_combes_1992_data_reading(filedir):
 
     return data
 
+def fixsen_1998_data_reading(filedir):
+    
+    print("I am in the function fixsen_1998_data_reading")
+
+    # Read the emissions table
+    table1 = pd.read_csv(f"{filedir}/co_sled_observations/fixsen_1998/table1_fluxes.csv", sep=",")
+
+    # For each region get the corresponding data     
+    regions = ["GC", "Inner", "Outer", "HighLat"]
+    # Get the line names 
+    line_names = table1['Line'].to_numpy()
+
+    data_dict = {}    
+    for region in regions:
+        fluxes = table1[region].to_numpy()
+        temp_dict = {} # Define a temporary dictionary to hold line fluxes
+        for line, flux in zip(line_names, fluxes):
+            new_data = {line: flux}
+            temp_dict.update(new_data)
+
+        # Update the region data
+        new_data_region = {region: temp_dict}
+        data_dict.update(new_data_region)
+
+    # Create dataframe from the data_dict
+    data = pd.DataFrame.from_dict(data_dict, orient='index')
+
+    # Change the column names 
+    new_column_names = {
+        "CO 1-0": "Ico10", # nW m^-2 sr^-1
+        "CO 2-1": "Ico21", # nW m^-2 sr^-1
+        "CO 3-2": "Ico32", # nW m^-2 sr^-1
+    }
+    for old_name, new_name in new_column_names.items():
+        data.rename(columns={old_name: new_name}, inplace=True)
+
+    # Calculate temperature ratios 
+    data['R21'] = data['Ico21'] / data['Ico10'] / (2/1)**2 # Ico21 / Ico10 in the units of K km s^-1. Conversion is done based on the Rayleight-Jeans law.
+    data['R31'] = data['Ico32'] / data['Ico10'] / (3/1)**2 # Ico32 / Ico10 in the units of K km s^-1
+    data['R32'] = data['Ico32'] / data['Ico21'] / (3/2)**2 # Ico32 / Ico21 in the units of K km s^-1
+
+    return data
+
+def mauersberger_1999_data_reading(filedir):
+
+    print("I am in the function mauersberger_1999_data_reading")
+
+    ## Read table 1
+    table1 = pd.read_csv(f"{filedir}/co_sled_observations/mauersberger_1999/line_parameters_table1.csv", sep=",")
+    # Rename columns
+    new_column_names = {
+        "Source": "name",
+        "I10": "Ico10", # K km s^-1
+        "I21": "Ico21", # K km s^-1
+        "I32": "Ico32", # K km s^-1
+    }
+    for old_name, new_name in new_column_names.items():
+        table1.rename(columns={old_name: new_name}, inplace=True)
+    # Remove ')'
+    table1 = table1.replace(r'\)', '', regex=True)
+    # Remove '~'
+    table1 = table1.replace(r'~', '', regex=True)
+    # Replace '(' with '±'
+    table1 = table1.replace(r'\(', '±', regex=True)
+    # Remove a,b,c from ["Ico10", "Ico21", "Ico32"]
+    for col in ["Ico10", "Ico21", "Ico32"]:
+        table1[col] = table1[col].str.replace(r'[abc]', '', regex=True).str.strip()
+    # Get the columns with ± sign. Get the number next to it and make a new column with _error suffix
+    columns_with_plus_minus = ["Ico10", "Ico21", "Ico32"]
+    for col in columns_with_plus_minus:
+        table1[[f"{col}", f"{col}_error"]] = table1[col].apply(lambda x: pd.Series(split_plus_minus(x, symbols=['±'])))
+    
+
+    ## Read table 2 
+    table2 = pd.read_csv(f"{filedir}/co_sled_observations/mauersberger_1999/table2_properties_galaxies.csv", sep=",")
+    table2['LIR_1e9LSun'] *= 1e9  # Convert to Lsun
+    # Change the column names
+    new_column_names_table2 = {
+        "Source": "name",
+        "Type": "type",
+        "LIR_1e9LSun": "LIR_Lsun",
+        "T_dust_K": "Tdust",
+        "R31": "R31", 
+    }
+    for old_name, new_name in new_column_names_table2.items():
+        table2.rename(columns={old_name: new_name}, inplace=True)
+
+    # Merge the two tables on 'name' column
+    data = pd.merge(table1, table2, on='name', how='inner', validate='one_to_one')
+
+    # Change the data types of the columns to float where possible
+    for col in data.columns:
+        try:
+            data[col] = data[col].astype(float)
+        except ValueError:
+            pass  # If conversion fails, keep the original data type
+
+
+    # Calculate R21 and R32
+    data['R21'] = data['Ico21'] / data['Ico10'] # Ico21 / Ico10 in the units of K km s^-1
+    data['R32'] = data['Ico32'] / data['Ico21'] # Ico32 / Ico21 in the units of K km s^-1
+
+    return data
+
 def meier_2001_data_reading(filedir):
 
     '''
@@ -1330,6 +1434,9 @@ def meier_2001_data_reading(filedir):
 
     for old_name, new_name in new_column_names.items():
         data.rename(columns={old_name: new_name}, inplace=True)
+
+    galaxies_discarded = ['II Zw 40', 'Mrk 86']
+    data = data[~data['name'].isin(galaxies_discarded)].reset_index(drop=True)
 
     return data
 
@@ -1495,6 +1602,127 @@ def cormier_2014_data_reading(filedir):
 
     return data
 
+def keenan_2014_data_reading(filedir):
+
+    """
+    Read the AMISS CO line catalog (apjad7504t6_mrt.txt)
+    using fixed-width columns from the byte-by-byte specification.
+
+    While calcuating R21 etc they used L'co10,30um.
+
+    """
+    print("I am in the function keenan_2014_data_reading")
+
+    # Define column widths based on Byte positions
+    colspecs = [
+        (0, 4),    # AMISS.ID
+        (5, 24),   # SDSS.ID
+        (25, 31),  # xCOLDGASS.ID
+        (32, 39),  # AMISS.subsample
+        (40, 46),  # zspec
+        (47, 55),  # Mstar
+        (56, 64),  # SFR
+        (65, 69),  # R50
+        (70, 74),  # Inclination
+        (75, 82),  # CO10-flux.30m.uncorr
+        (83, 88),  # e_CO10-flux.30m.uncorr
+        (89, 93),  # CO10-correction.30m
+        (94, 101), # CO10-flux.30m
+        (102, 107),# e_CO10-flux.30m
+        (108, 117),# CO10-luminosity.30m
+        (118, 126),# e_CO10-luminosity.30m
+        (127, 131),# e_sys_CO10-luminosity.30m
+        (132, 139),# CO10-flux.12m.uncorr
+        (140, 146),# e_CO10-flux.12m.uncorr
+        (147, 151),# CO10-correction.12m
+        (152, 159),# CO10-flux.12m
+        (160, 165),# e_CO10-flux.12m
+        (166, 174),# CO10-luminosity.12m
+        (175, 183),# e_CO10-luminosity.12m
+        (184, 188),# e_sys_CO10-luminosity.12m
+        (189, 196),# CO21-flux.smt.uncorr
+        (197, 203),# e_CO21-flux.smt.uncorr
+        (204, 208),# CO21-correction.smt
+        (209, 216),# CO21-flux.smt
+        (217, 223),# e_CO21-flux.smt
+        (224, 233),# CO21-luminosity.smt
+        (234, 242),# e_CO21-luminosity.smt
+        (243, 247),# e_sys_CO21-luminosity.smt
+        (248, 254),# CO32-flux.smt.uncorr
+        (255, 260),# e_CO32-flux.smt.uncorr
+        (261, 265),# CO32-correction.smt
+        (266, 273),# CO32-flux.smt
+        (274, 279),# e_CO32-flux.smt
+        (280, 288),# CO32-luminosity.smt
+        (289, 297),# e_CO32-luminosity.smt
+        (298, 302),# e_sys_CO32-luminosity.smt
+        (303, 309),# r21
+        (310, 317),# e_r21
+        (318, 324),# e_sys_r21
+        (325, 329),# r31
+        (330, 334),# e_r31
+        (335, 339),# e_sys_r31
+        (340, 344),# r32
+        (345, 349),# e_r32
+        (350, 353) # e_sys_r32
+    ]
+
+    column_names = [
+        "AMISS_ID", "SDSS_ID", "xCOLDGASS_ID", "AMISS_subsample",
+        "zspec", "Mstar", "SFR", "R50", "Inclination",
+        "CO10_flux_30m_uncorr", "e_CO10_flux_30m_uncorr", "CO10_correction_30m",
+        "CO10_flux_30m", "e_CO10_flux_30m",
+        "CO10_luminosity_30m", "e_CO10_luminosity_30m", "e_sys_CO10_luminosity_30m",
+
+        "CO10_flux_12m_uncorr", "e_CO10_flux_12m_uncorr", "CO10_correction_12m",
+        "CO10_flux_12m", "e_CO10_flux_12m",
+        "CO10_luminosity_12m", "e_CO10_luminosity_12m", "e_sys_CO10_luminosity_12m",
+
+        "CO21_flux_smt_uncorr", "e_CO21_flux_smt_uncorr", "CO21_correction_smt",
+        "CO21_flux_smt", "e_CO21_flux_smt",
+        "CO21_luminosity_smt", "e_CO21_luminosity_smt", "e_sys_CO21_luminosity_smt",
+
+        "CO32_flux_smt_uncorr", "e_CO32_flux_smt_uncorr", "CO32_correction_smt",
+        "CO32_flux_smt", "e_CO32_flux_smt",
+        "CO32_luminosity_smt", "e_CO32_luminosity_smt", "e_sys_CO32_luminosity_smt",
+
+        "r21", "e_r21", "e_sys_r21",
+        "r31", "e_r31", "e_sys_r31",
+        "r32", "e_r32", "e_sys_r32"
+    ]
+
+    # Load using fixed-width parsing
+    path2file = f"{filedir}/co_sled_observations/keenan_2014/apjad7504t6_mrt.txt"
+    df = pd.read_fwf(
+        path2file,
+        colspecs=colspecs,
+        names=column_names,
+        comment='#',   # skip header/comment lines
+        skip_blank_lines=True,
+        skiprows=82  # skip the first line if it's a header
+    )
+
+    # Change column names 
+    new_column_names = {
+        'r21': 'R21', # Temperature ratio CO(2-1)/CO(1-0) in the units of K km s^-1 using L'co10,30um
+        'r31': 'R31',
+        'r32': 'R32',
+    }
+    for old_name, new_name in new_column_names.items():
+        df.rename(columns={old_name: new_name}, inplace=True)
+
+    # Change the data types of the columns to float where possible
+    for col in df.columns:
+        try:
+            df[col] = df[col].astype(float)
+        except ValueError:
+            pass  # If conversion fails, keep the original data type
+
+    # Use only positive values of R21, R31, R32
+    df = df[(df['R21'] > 0) & (df['R31'] > 0) & (df['R32'] > 0)].reset_index(drop=True)
+
+    return df
+
 def daddi_2015_data_reading(filedir):
 
     print("I am in the function daddi_2015_data_reading")
@@ -1537,10 +1765,6 @@ def split_plus_minus(val, symbols=['±', '+']):
         return float(value.strip()), float(error.strip())
     return val, None  # Leave original value if no ± or +
 
-if __name__ == "__main__": 
-    data = daddi_2015_data_reading(filedir="/mnt/raid-cita/dtolgay/Observations")
-    print(data.head())
-
 ###############################################################################################################################################
 # Importing all CO observations 
 def read_CO_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
@@ -1567,13 +1791,16 @@ def read_CO_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
 def read_CO_Sled_observations(base_dir="/mnt/raid-cita/dtolgay/Observations"):
 
     braine_combes_1992 = braine_combes_1992_data_reading(filedir=base_dir)
+    mauersberger_1999 = mauersberger_1999_data_reading(filedir=base_dir)
+    fixsen_1998 = fixsen_1998_data_reading(filedir=base_dir)
     meier_2001 = meier_2001_data_reading(filedir=base_dir)
     hatot_stutzki_2003 = hatot_stutzki_2003_data_reading(filedir=base_dir)
     nikolic_2007 = nikolic_2007_data_reading(filedir=base_dir)
     cormier_2014 = cormier_2014_data_reading(filedir=base_dir)
+    keenan_2014 = keenan_2014_data_reading(filedir=base_dir)
     daddi_2015 = daddi_2015_data_reading(filedir=base_dir)
 
-    return braine_combes_1992, meier_2001, hatot_stutzki_2003, nikolic_2007, cormier_2014, daddi_2015
+    return braine_combes_1992, fixsen_1998, mauersberger_1999, meier_2001, hatot_stutzki_2003, nikolic_2007, cormier_2014, keenan_2014, daddi_2015
 
 ###############
 # Importing C2 observations 
