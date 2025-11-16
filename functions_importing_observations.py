@@ -1713,6 +1713,8 @@ def keenan_2014_data_reading(filedir):
 
     # Change the data types of the columns to float where possible
     for col in df.columns:
+        if col in ['AMISS_ID', 'SDSS_ID', 'xCOLDGASS_ID', 'AMISS_subsample']:
+            continue  # Skip non-numeric columns
         try:
             df[col] = df[col].astype(float)
         except ValueError:
