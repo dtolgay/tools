@@ -860,6 +860,30 @@ def twelve_plus_logOH_to_solar_metallicity(X1, X_solar=8.69):
 
 ###############################################################################################################################################
 
+def li_2016_data_reading(filedir):
+
+    path2file = f"{filedir}/tony_li_2016/tony_li.csv"
+
+    data = pd.read_csv(path2file, sep=',')   
+
+    new_column_names = {
+        "halo_mass(Msolar)": "halo_mass",
+        "LCO10(Lsolar)": "L_co_10",
+    }
+    for old_name, new_name in new_column_names.items():
+        data.rename(columns={old_name: new_name}, inplace=True)
+
+    # Convert Lsolar to K km s^-1 pc^2
+    data["L_co_10"] = data["L_co_10"] / 4.9e-5 # Approximate conversion factor from L_solar to K km s^-1 pc^2
+
+    return data
+
+if __name__ == "__main__":
+    filedir = "/mnt/raid-cita/dtolgay/Observations"
+    data = li_2016_data_reading(filedir)
+
+    print(data.head())
+    print(data.columns)
 
 def Li_model(galaxy_name):
 
