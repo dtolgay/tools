@@ -437,7 +437,22 @@ def krumholz_2011_data_reading(filedir):
     data['detection_flag'] = np.where(upper_limit_condition, 2, 1)
     data['log_LCO_10'] = data['log_LCO_10'].str.replace('<', '').astype(float)
 
+
+    # Stellar mass estimations 
+    galaxies_stellar_masses = pd.read_csv(f"{filedir}/krumholz_2011_lowZ/stellar_masses_kingfish.csv")
+    change_column_names = {
+        "Reference": "Ref_Mstar",
+    }    
+    galaxies_stellar_masses.rename(columns=change_column_names, inplace=True)
+
+    # Merge dataframes based on 'Name' column if the Name exists in data put NaN
+    data = data.merge(galaxies_stellar_masses, on='Name', how='left')
+
     return data
+
+if __name__ == "__main__":
+    fdir = "/mnt/raid-cita/dtolgay/Observations" 
+    krumholz_2011_data_reading(fdir)
 
 ###############################################################################################################################################
 
@@ -860,6 +875,7 @@ def twelve_plus_logOH_to_solar_metallicity(X1, X_solar=8.69):
 
 ###############################################################################################################################################
 
+
 def li_2016_data_reading(filedir):
 
     path2file = f"{filedir}/tony_li_2016/tony_li.csv"
@@ -877,13 +893,6 @@ def li_2016_data_reading(filedir):
     data["L_co_10"] = data["L_co_10"] / 4.9e-5 # Approximate conversion factor from L_solar to K km s^-1 pc^2
 
     return data
-
-if __name__ == "__main__":
-    filedir = "/mnt/raid-cita/dtolgay/Observations"
-    data = li_2016_data_reading(filedir)
-
-    print(data.head())
-    print(data.columns)
 
 def Li_model(galaxy_name):
 
