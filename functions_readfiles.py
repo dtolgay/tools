@@ -337,6 +337,9 @@ def read_interpolated_files_usingFilePath2(path, interpolation_type):
         ]
     elif interpolation_type == "temperature":
         file_specific_columns = ["Th2", "Tco", "T", "Tcii", "Toiii"]
+    elif interpolation_type == "temperature_at_max_density":
+        file_specific_columns = ["Tco", "Th2"]
+
 
     else:
         raise ValueError("interpolation_type must be one of 'line_emissions', 'abundance', 'temperature")
@@ -370,6 +373,7 @@ def read_interpolated_files_usingFilePath2(path, interpolation_type):
     )
 
     return gas, file_specific_columns
+
 
 def read_all_interpolated_files_usingFilePath(path: str, files_info: dict, verbose: bool = False):
 
